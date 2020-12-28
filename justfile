@@ -7,14 +7,14 @@ watch-test:
 build:
     cargo build --all
 
-#web:
-#    (cd client; wasm-pack build --target web --out-name package --dev)
+web:
+    (cd web; wasm-pack build --target web --out-name package --dev)
 
-#watch-web:
-#    watchexec -w client/src -- just web
+watch-web:
+    watchexec -w web/src -- just web
 
-#serve: web
-#    (cd client; microserver)
+serve: web
+    (cd web; microserver)
 
 tree:
     tree -I "pkg|target" --dirsfirst

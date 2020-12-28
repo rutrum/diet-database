@@ -2,11 +2,13 @@
 
 #[macro_use]
 extern crate rocket;
+extern crate rocket_cors;
 extern crate rocket_contrib;
 extern crate chrono;
 
 use rocket_contrib::json::Json;
 use rocket::http::Status;
+use rocket_cors::{AllowedOrigins, Error};
 
 use api::db;
 use diet_database::bowel::*;
@@ -28,14 +30,16 @@ fn bowel_add(bowel: Json<NewBowel>) -> Status {
     }
 }
 
-fn main() {
-    let nb = NewBowel {
-        date: chrono::NaiveDate::from_ymd(2020, 01, 01),
-        time: None,
-        scale: 5,
-    };
+fn main() -> Result<(), Error> {
+    let cors = rocket_cors::CorsOptions {
+        allowed_origins: AllowedOrigins::all(),
+        ..Default::default()
+    }.to_cors()?;
 
     rocket::ignite()
         .mount("/", routes![bowel_get, bowel_add])
+        .attach(cors)
         .launch();
+
+    Ok(())
 }
