@@ -1,5 +1,6 @@
 use seed::{prelude::*, *};
 use diet_database::bowel::Bowel;
+use diet_database::Tabular;
 
 const API_URL: &'static str = "http://localhost:8000";
 
@@ -41,7 +42,28 @@ fn view(model: &Model) -> Node<Msg> {
             "Load Bowels",
             ev(Ev::Click, |_| Msg::LoadBowels),
         ],
-        format!("{:?}", model.bowels)
+        format!("{:?}", model.bowels),
+        view_tabular(&model.bowels),
+        model.bowels.headers(),
+    ]
+}
+
+fn view_tabular<T: Tabular>(table: &T) -> Node<Msg> {
+    let headers = table.headers();
+    let matrix = table.matrix();
+    table![
+        tr![
+            headers.iter().map(|header| {
+                th![header]
+            })
+        ],
+        matrix.iter().map(|row| {
+            tr![
+                row.iter().map(|cell| {
+                    td![cell]
+                })
+            ]
+        })
     ]
 }
 

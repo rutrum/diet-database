@@ -9,3 +9,6 @@ pub mod db;
 pub use db::schema;
 
 pub mod bowel;
+
+mod table;
+pub use table::Tabular;
