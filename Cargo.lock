@@ -59,6 +59,7 @@ dependencies = [
 name = "api"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "diesel",
  "diet_database",
  "rocket",

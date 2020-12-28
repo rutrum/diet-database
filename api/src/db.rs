@@ -12,13 +12,13 @@ pub fn create_connection() -> MysqlConnection {
         .unwrap_or_else(|_| panic!("Cannot connect to database at {}", database_url))
 }
 
-pub fn create_bowel(conn: &MysqlConnection, bowel: NewBowel) -> Result<usize> {
+pub fn insert_bowel(conn: &MysqlConnection, bowel: NewBowel) -> Result<usize> {
     diesel::insert_into(schema::bowel::table)
         .values(&bowel)
         .execute(conn)
 }
 
-pub fn query_bowel(conn: &MysqlConnection) -> Result<Vec<Bowel>> {
+pub fn get_bowels(conn: &MysqlConnection) -> Result<Vec<Bowel>> {
     schema::bowel::table
         .load::<Bowel>(conn)
 }
