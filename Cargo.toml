@@ -1,12 +1,18 @@
 [package]
-name = "diet-database"
+name = "diet_database"
 version = "0.1.0"
 authors = ["David Purdum <purdum41@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[workspace]
+members = ["api"]
+
+[features]
+database = ["diesel"]
+
 [dependencies]
 serde = { version = "1.0.117", features = ["derive"] }
-diesel = { version = "1.4.5", features = ["mysql", "numeric", "chrono"] }
+diesel = { version = "1.4.5", features = ["mysql", "numeric", "chrono"], optional = true }
 chrono = { version = "0.4", features = ["serde"] } 

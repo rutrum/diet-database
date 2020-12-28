@@ -8,3 +8,11 @@ pub struct NewBowel {
     pub time: Option<NaiveTime>,
     pub scale: i8,
 }
+
+#[derive(Queryable)]
+pub struct Bowel {
+    pub id: i32,
+    pub date: NaiveDate,
+    pub time: Option<NaiveTime>,
+    pub scale: i8,
+}
