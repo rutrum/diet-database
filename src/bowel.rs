@@ -43,7 +43,6 @@ impl Tabular for Vec<Bowel> {
                 Some(t) => t.format("%-I:%M %p").to_string(),
             };
             vec![
-                bowel.id.to_string(),
                 bowel.date.format("%b %d %Y").to_string(),
                 time,
                 bowel.scale.to_string(),

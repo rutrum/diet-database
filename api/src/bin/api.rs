@@ -11,22 +11,68 @@ use rocket::http::Status;
 use rocket_cors::{AllowedOrigins, Error};
 
 use api::db;
-use diet_database::bowel::*;
 
-#[get("/bowel")]
-fn bowel_get() -> Json<Vec<Bowel>> {
-    let conn = db::create_connection();
-    let bowels = db::get_bowels(&conn).unwrap_or_default();
-    Json(bowels)
+mod bowel {
+    use super::*;
+    use diet_database::bowel::*;
+
+    #[get("/bowel")]
+    pub fn get_all() -> Json<Vec<Bowel>> {
+        let conn = db::create_connection();
+        let bowels = db::bowel::select_all(&conn).unwrap_or_default();
+        Json(bowels)
+    }
+
+    #[post("/bowel", data = "<bowel>")]
+    pub fn add(bowel: Json<NewBowel>) -> Status {
+        let bowel = bowel.into_inner();
+        let conn = db::create_connection();
+        match db::bowel::insert(&conn, bowel) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+
+    #[delete("/bowel", data = "<bowel>")]
+    pub fn delete(bowel: Json<Bowel>) -> Status {
+        let bowel = bowel.into_inner();
+        let conn = db::create_connection();
+        match db::bowel::delete(&conn, bowel) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
 }
 
-#[post("/bowel", data = "<bowel>")]
-fn bowel_add(bowel: Json<NewBowel>) -> Status {
-    let bowel = bowel.into_inner();
-    let conn = db::create_connection();
-    match db::insert_bowel(&conn, bowel) {
-        Ok(_) => Status::Ok,
-        Err(_) => Status::InternalServerError,
+mod store {
+    use super::*;
+    use diet_database::store::*;
+
+    #[get("/store")]
+    pub fn get_all() -> Json<Vec<Store>> {
+        let conn = db::create_connection();
+        let stores = db::store::select_all(&conn).unwrap_or_default();
+        Json(stores)
+    }
+
+    #[post("/store", data = "<store>")]
+    pub fn add(store: Json<NewStore>) -> Status {
+        let store = store.into_inner();
+        let conn = db::create_connection();
+        match db::store::insert(&conn, store) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+
+    #[delete("/store", data = "<store>")]
+    pub fn delete(store: Json<Store>) -> Status {
+        let store = store.into_inner();
+        let conn = db::create_connection();
+        match db::store::delete(&conn, store) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
     }
 }
 
@@ -37,7 +83,11 @@ fn main() -> Result<(), Error> {
     }.to_cors()?;
 
     rocket::ignite()
-        .mount("/", routes![bowel_get, bowel_add])
+        .mount("/", routes![
+               bowel::get_all,
+               bowel::add,
+               bowel::delete,
+        ])
         .attach(cors)
         .launch();
 

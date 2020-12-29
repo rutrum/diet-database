@@ -3,6 +3,7 @@ use chrono::naive::{NaiveDate, NaiveTime};
 use crate::Msg as SuperMsg;
 use diet_database::bowel::*;
 use crate::api_call;
+use super::get_event_value;
 
 pub enum Msg {
     UpdateDate(String),
@@ -71,11 +72,6 @@ pub fn view(model: &Model) -> Node<Msg> {
         div![
             label![ "Date of poo: " ],
             input![ attrs!(At::Type => "Date") ],
-            ev(Ev::Change, |ev| {
-                ev.prevent_default();
-                let el = ev.target().unwrap().unchecked_into::<web_sys::HtmlInputElement>();
-                Msg::UpdateDate(el.value())
-            }),
             ev(Ev::Change, |ev| Msg::UpdateDate(get_event_value(ev))),
         ],
         div![
@@ -94,9 +90,4 @@ pub fn view(model: &Model) -> Node<Msg> {
         ],
         &model.err_msg,
     ]
-}
-
-fn get_event_value(ev: web_sys::Event) -> String {
-    ev.prevent_default();
-    ev.target().unwrap().unchecked_into::<web_sys::HtmlInputElement>().value()
 }

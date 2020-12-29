@@ -20,25 +20,12 @@ pub enum FormType {
     Bowel,
 }
 
-pub enum Table {
-    
-}
-
 pub enum Page {
-    Bowel(Vec<Bowel>),
-    Store,
+    Bowel(form::bowel::Model),
+    Store(form::store::Model),
 }
+
 /*
-impl Page {
-    fn view(&self) {
-        match self {
-            Page::Bowel(bowels) => {
-
-            }
-        }
-    }
-}
-
 pub enum Msg {
     FetchRecords(Table),
     FetchedRecords(Table),
@@ -59,10 +46,14 @@ pub enum Msg {
     DeleteBowel(usize),
     DeleteBowelSuccess,
     DeleteBowelFailure,
+    InitPage(Page),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
+        Msg::InitPage(page) => {
+            orders.send_msg(Msg::LoadBowels);
+        }
         Msg::LoadBowels => {
             log!("Fetching bowels");
             orders.perform_cmd({
@@ -110,7 +101,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
 fn view(model: &Model) -> Node<Msg> {
     div![
-        C!["counter"],
+        view_page_selector(model),
         button![
             "Load Bowels",
             ev(Ev::Click, |_| Msg::LoadBowels),
@@ -127,6 +118,19 @@ fn view(model: &Model) -> Node<Msg> {
                 }
             }
         })
+    ]
+}
+
+fn view_page_selector(model: &Model) -> Node<Msg> {
+    nav![
+        div![
+            "Bowel",
+            ev(Ev::Click, |_| Msg::InitPage(Page::Bowel(form::bowel::init())))
+        ],
+        div![
+            "Store",
+            ev(Ev::Click, |_| Msg::InitPage(Page::Store(form::store::init())))
+        ],
     ]
 }
 
