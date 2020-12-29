@@ -4,59 +4,39 @@ use crate::Msg as SuperMsg;
 use diet_database::bowel::*;
 use crate::api_call;
 use super::get_event_value;
+use diet_database::Tabular;
 
 pub enum Msg {
-    UpdateDate(String),
-    UpdateTime(String),
-    UpdateScale(String),
-    UpdateErrorMsg(String),
-    SubmitPoo,
+    Fetch,
+    Fetched(Result<Vec<Bowel>, String>),
+    FormUpdate(FormUpdateMsg),
+    Delete(usize),
+    Deleted(Result<(), String>),
+    Submit,
+    Submitted(Result<(), String>),
+}
+
+pub enum FormUpdateMsg {
+    Date(String),
+    Time(String),
+    Scale(String),
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct Model {
-    date: String,
-    time: String,
-    scale: String,
+    bowels: Vec<Bowel>,
+    form: Form,
     err_msg: String,
 }
 
-pub fn init() -> Model {
-    Model {
-        scale: 3.to_string(),
-        ..Default::default()
-    }
+#[derive(Debug, Clone, Default)]
+pub struct Form {
+    date: String,
+    time: String,
+    scale: String,
 }
 
-pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<SuperMsg>) {
-    use Msg::*;
-    match msg {
-        UpdateDate(s) => model.date = s,
-        UpdateTime(s) => model.time = s,
-        UpdateScale(s) => model.scale = s,
-        UpdateErrorMsg(s) => model.err_msg = s,
-        SubmitPoo => {
-            log!("Submitting poo");
-            match model.to_new_bowel() {
-                Ok(nb) => {
-                    model.err_msg = String::new();
-                    orders.perform_cmd({
-                        async move {
-                            match api_call::bowel::post(nb).await {
-                                Ok(s) if s.status().is_ok() => SuperMsg::SubmitBowelSuccess,
-                                _ => SuperMsg::SubmitBowelFailure,
-                            }
-                        }
-                    });
-                }
-                Err(err_msg) => model.err_msg = err_msg.to_string(),
-            }
-        }
-    }
-    log!(model);
-}
-
-impl Model {
+impl Form {
     fn to_new_bowel(&self) -> Result<NewBowel, &'static str> {
         let date = NaiveDate::parse_from_str(&self.date, "%Y-%m-%d")
             .map_err(|_| "Wrong date format")?;
@@ -67,27 +47,131 @@ impl Model {
     }
 }
 
+pub fn init() -> Model {
+    Model {
+        form: Form {
+            scale: 3.to_string(),
+            ..Default::default()
+        },
+        ..Default::default()
+    }
+}
+
+pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
+    use Msg::*;
+    match msg {
+        Fetch => {
+            log!("Fetching bowels");
+            orders.perform_cmd({
+                async move {
+                    let bowels = api_call::bowel::get().await.unwrap_or_default();
+                    Msg::Fetched(Ok(bowels))
+                }
+            });
+        }
+        Fetched(result) => match result {
+            Ok(bowels) => model.bowels = bowels,
+            Err(msg) => model.err_msg = msg,
+        }
+        FormUpdate(update_msg) => {
+            use FormUpdateMsg::*;
+            match update_msg {
+                Date(s) => model.form.date = s,
+                Time(s) => model.form.time = s,
+                Scale(s) => model.form.scale = s,
+            }
+        }
+        Delete(idx) => {
+            log!("deleting bowel");
+            let b = model.bowels[idx];
+            orders.perform_cmd({
+                async move {
+                    match api_call::bowel::delete(b).await {
+                        Ok(s) if s.status().is_ok() => Deleted(Ok(())),
+                        _ => Deleted(Err("Error deleting on server".to_string())),
+                    }
+                }
+            });
+        }
+        Deleted(result) => match result {
+            Ok(()) => {orders.send_msg(Fetch); },
+            Err(msg) => model.err_msg = msg,
+        }
+        Submit => {
+            log!("Submitting poo");
+            match model.form.to_new_bowel() {
+                Ok(nb) => {
+                    model.err_msg = String::new();
+                    orders.perform_cmd({
+                        async move {
+                            match api_call::bowel::post(nb).await {
+                                Ok(s) if s.status().is_ok() => Submitted(Ok(())),
+                                _ => Submitted(Err("Error submitting to server".to_string())),
+                            }
+                        }
+                    });
+                }
+                Err(err_msg) => model.err_msg = err_msg.to_string(),
+            }
+        }
+        Submitted(result) => match result {
+            Ok(()) => {orders.send_msg(Fetch); },
+            Err(msg) => model.err_msg = msg,
+        }
+    }
+    log!(model);
+}
+
 pub fn view(model: &Model) -> Node<Msg> {
+    let headers = model.bowels.headers();
+    let matrix = model.bowels.matrix();
+    div![
+        button![
+            "Load Bowels",
+            ev(Ev::Click, |_| Msg::Fetch),
+        ],
+        view_form(),
+        table![
+            tr![
+                headers.iter().map(|header| {
+                    th![header]
+                }),
+            ],
+            matrix.iter().enumerate().map(|(i, row)| {
+                tr![
+                    row.iter().map(|cell| {
+                        td![cell]
+                    }),
+                    button![
+                        "delete",
+                        ev(Ev::Click, move |_| Msg::Delete(i)),
+                    ]
+                ]
+            }),
+        ]
+    ]
+}
+
+pub fn view_form() -> Node<Msg> {
     div![
         div![
             label![ "Date of poo: " ],
             input![ attrs!(At::Type => "Date") ],
-            ev(Ev::Change, |ev| Msg::UpdateDate(get_event_value(ev))),
+            ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Date(get_event_value(ev)))),
         ],
         div![
             label![ "Time of poo: " ],
             input![ attrs!(At::Type => "Time") ],
-            ev(Ev::Change, |ev| Msg::UpdateTime(get_event_value(ev))),
+            ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Time(get_event_value(ev)))),
         ],
         div![
             label![ "Scale of poo: " ],
             input![ attrs!(At::Type => "Range", At::Min => 1, At::Max => 7) ],
-            ev(Ev::Change, |ev| Msg::UpdateScale(get_event_value(ev))),
+            ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Scale(get_event_value(ev)))),
         ],
         button![
             "Submit Poo",
-            ev(Ev::Click, |_| Msg::SubmitPoo),
+            ev(Ev::Click, |_| Msg::Submit),
         ],
-        &model.err_msg,
     ]
 }

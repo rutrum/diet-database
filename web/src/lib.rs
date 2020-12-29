@@ -1,19 +1,18 @@
 use seed::{prelude::*, *};
 use diet_database::bowel::*;
-use diet_database::Tabular;
+//use diet_database::Tabular;
 
 mod api_call;
 mod form;
 
 fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
-    Model::default()
+    Model {
+        page: Page::Bowel(form::bowel::init()),
+    }
 }
 
-#[derive(Default)]
 struct Model {
-    bowels: Vec<Bowel>,
-    form: Option<FormType>,
-    bowel_form: form::bowel::Model,
+    page: Page,
 }
 
 pub enum FormType {
@@ -22,20 +21,15 @@ pub enum FormType {
 
 pub enum Page {
     Bowel(form::bowel::Model),
-    Store(form::store::Model),
+//    Store(form::store::Model),
+}
+
+pub enum Msg {
+    LoadPage(Page),
+    BowelPageUpdate(form::bowel::Msg),
 }
 
 /*
-pub enum Msg {
-    FetchRecords(Table),
-    FetchedRecords(Table),
-    ShowForm(Table),
-    FormUpdate(Table),
-    SubmitSuccess(Table),
-    SubmitFailure(Table),
-}
-*/
-
 pub enum Msg {
     LoadBowels,
     FetchedBowels(Vec<Bowel>),
@@ -48,9 +42,19 @@ pub enum Msg {
     DeleteBowelFailure,
     InitPage(Page),
 }
+*/
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
+        Msg::LoadPage(page) => match page {
+            Page::Bowel(model) => {}
+        }
+        Msg::BowelPageUpdate(msg) => {
+            if let Page::Bowel(model) = &mut model.page {
+                form::bowel::update(msg, model, &mut orders.proxy(Msg::BowelPageUpdate));
+            }
+        }
+        /*
         Msg::InitPage(page) => {
             orders.send_msg(Msg::LoadBowels);
         }
@@ -96,12 +100,15 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.send_msg(Msg::LoadBowels);
         }
         Msg::DeleteBowelFailure => log!("Failed to delete!"),
+        */
     }
 }
 
 fn view(model: &Model) -> Node<Msg> {
     div![
         view_page_selector(model),
+        view_page(model),
+        /*
         button![
             "Load Bowels",
             ev(Ev::Click, |_| Msg::LoadBowels),
@@ -118,23 +125,33 @@ fn view(model: &Model) -> Node<Msg> {
                 }
             }
         })
+        */
     ]
+}
+
+fn view_page(model: &Model) -> Node<Msg> {
+    match &model.page {
+        Page::Bowel(model) => form::bowel::view(&model).map_msg(Msg::BowelPageUpdate),
+    }
 }
 
 fn view_page_selector(model: &Model) -> Node<Msg> {
     nav![
         div![
             "Bowel",
-            ev(Ev::Click, |_| Msg::InitPage(Page::Bowel(form::bowel::init())))
+            ev(Ev::Click, |_| Msg::LoadPage(Page::Bowel(form::bowel::init())))
         ],
+        /*
         div![
             "Store",
             ev(Ev::Click, |_| Msg::InitPage(Page::Store(form::store::init())))
         ],
+        */
     ]
 }
 
-fn view_tabular<T: Tabular>(table: &T) -> Node<Msg> {
+/*
+pub fn view_tabular<T: Tabular>(table: &T) -> Node<Msg> {
     let headers = table.headers();
     let matrix = table.matrix();
     table![
@@ -156,6 +173,7 @@ fn view_tabular<T: Tabular>(table: &T) -> Node<Msg> {
         }),
     ]
 }
+*/
 
 #[wasm_bindgen(start)]
 pub fn start() {
