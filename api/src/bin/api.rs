@@ -87,6 +87,9 @@ fn main() -> Result<(), Error> {
                bowel::get_all,
                bowel::add,
                bowel::delete,
+               store::get_all,
+               store::add,
+               store::delete,
         ])
         .attach(cors)
         .launch();
