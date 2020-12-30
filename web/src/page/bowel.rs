@@ -25,6 +25,9 @@ impl PageMsg for Msg {
     fn submit() -> Self {
         Msg::Submit
     }
+    fn load() -> Self {
+        Msg::Fetch
+    }
 }
 
 pub enum FormUpdateMsg {

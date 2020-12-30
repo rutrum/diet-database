@@ -4,6 +4,8 @@ use diet_database::store::*;
 use diet_database::Tabular;
 use seed::{prelude::*, *};
 
+use super::{PageMsg, PageModel};
+
 pub enum Msg {
     Fetch,
     Fetched(Result<Vec<Store>, String>),
@@ -12,6 +14,18 @@ pub enum Msg {
     Deleted(Result<(), String>),
     Submit,
     Submitted(Result<(), String>),
+}
+
+impl PageMsg for Msg {
+    fn delete(i: usize) -> Self {
+        Msg::Delete(i)
+    }
+    fn submit() -> Self {
+        Msg::Submit
+    }
+    fn load() -> Self {
+        Msg::Fetch
+    }
 }
 
 pub enum FormUpdateMsg {
@@ -23,6 +37,29 @@ pub struct Model {
     stores: Vec<Store>,
     form: Form,
     err_msg: String,
+}
+
+impl PageModel<Vec<Store>> for Model {
+    fn data(&self) -> &Vec<Store> {
+        &self.stores
+    }
+
+    fn error_msg(&self) -> &String {
+        &self.err_msg
+    }
+
+    fn form_fields<G: 'static + PageMsg>(&self) -> Vec<Node<G>> {
+        nodes![
+            div![
+                label!["Name of store:"],
+                input![attrs!(At::Type => "text")],
+                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Name(
+                    get_event_value(ev)
+                ))),
+            ],
+        ]
+    }
+
 }
 
 #[derive(Debug, Clone, Default)]
@@ -108,37 +145,4 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         },
     }
     log!(model);
-}
-
-pub fn view(model: &Model) -> Node<Msg> {
-    let headers = model.stores.headers();
-    let matrix = model.stores.matrix();
-    div![
-        C!["page"],
-        view_form(model),
-        table![
-            tr![headers.iter().map(|header| { th![header] }),],
-            matrix.iter().enumerate().map(|(i, row)| {
-                tr![
-                    row.iter().map(|cell| { td![cell] }),
-                    button!["delete", ev(Ev::Click, move |_| Msg::Delete(i)),]
-                ]
-            }),
-        ]
-    ]
-}
-
-pub fn view_form(model: &Model) -> Node<Msg> {
-    div![
-        C!["form"],
-        div![
-            label!["Name of store:"],
-            input![attrs!(At::Type => "text")],
-            ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Name(
-                get_event_value(ev)
-            ))),
-        ],
-        button!["Submit", ev(Ev::Click, |_| Msg::Submit),],
-        div![C!["error-msg"], &model.err_msg,]
-    ]
 }

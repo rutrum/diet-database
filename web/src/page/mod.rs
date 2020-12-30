@@ -8,6 +8,7 @@ pub trait PageMsg {
     /// Returns the msg cooresponding to deleting the ith item
     fn delete(_: usize) -> Self;
     fn submit() -> Self;
+    fn load() -> Self;
 }
 
 pub trait PageModel<T: Tabular> {

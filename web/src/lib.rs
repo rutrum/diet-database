@@ -2,10 +2,10 @@ use seed::{prelude::*, *};
 
 mod api_call;
 mod page;
-use page::PageModel;
+use page::{PageModel, PageMsg};
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
-    orders.send_msg(Msg::BowelPageUpdate(page::bowel::Msg::Fetch));
+    orders.send_msg(Msg::BowelPageUpdate(page::bowel::Msg::load()));
     Model {
         page: Page::Bowel(page::bowel::init()),
     }
@@ -30,8 +30,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::LoadPage(page) => {
             match &page {
-                Page::Bowel(_) => orders.send_msg(Msg::BowelPageUpdate(page::bowel::Msg::Fetch)),
-                Page::Store(_) => orders.send_msg(Msg::StorePageUpdate(page::store::Msg::Fetch)),
+                Page::Bowel(_) => orders.send_msg(Msg::BowelPageUpdate(page::bowel::Msg::load())),
+                Page::Store(_) => orders.send_msg(Msg::StorePageUpdate(page::store::Msg::load())),
             };
             model.page = page;
         }
@@ -55,7 +55,7 @@ fn view(model: &Model) -> Node<Msg> {
 fn view_page(model: &Model) -> Node<Msg> {
     match &model.page {
         Page::Bowel(model) => model.view().map_msg(Msg::BowelPageUpdate),
-        Page::Store(model) => page::store::view(&model).map_msg(Msg::StorePageUpdate),
+        Page::Store(model) => model.view().map_msg(Msg::StorePageUpdate),
     }
 }
 
