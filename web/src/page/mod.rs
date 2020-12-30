@@ -3,6 +3,7 @@ use diet_database::Tabular;
 
 pub mod bowel;
 pub mod store;
+pub mod grocery_trip;
 //pub mod generic;
 
 pub trait PageMsg {

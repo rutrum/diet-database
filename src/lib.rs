@@ -10,6 +10,7 @@ pub use db::schema;
 
 pub mod bowel;
 pub mod store;
+pub mod grocery_trip;
 
 mod table;
 pub use table::Tabular;

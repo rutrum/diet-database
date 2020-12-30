@@ -2,6 +2,7 @@ use seed::prelude::*;
 use crate::PageName;
 use diet_database::Tabular;
 use serde::{Serialize, Deserialize};
+use convert_case::{Casing, Case};
 
 const API_URL: &'static str = "http://localhost:8000";
 
@@ -9,11 +10,12 @@ const API_URL: &'static str = "http://localhost:8000";
 pub enum ApiCall {
     Bowel,
     Store,
+    GroceryTrip,
 }
 
 impl ApiCall {
     fn lower(&self) -> String {
-        format!("{:?}", self).to_lowercase()
+        format!("{:?}", self).to_case(Case::Snake)
     }
 
     pub async fn get<T: 'static + for<'de> Deserialize<'de>>(&self) -> fetch::Result<T> {

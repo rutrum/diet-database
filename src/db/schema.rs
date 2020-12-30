@@ -8,10 +8,25 @@ table! {
 }
 
 table! {
+    grocery_trip (id) {
+        id -> Integer,
+        date -> Date,
+        time -> Nullable<Time>,
+        store_id -> Integer,
+    }
+}
+
+table! {
     store (id) {
         id -> Integer,
         name -> Varchar,
     }
 }
 
-allow_tables_to_appear_in_same_query!(bowel, store,);
+joinable!(grocery_trip -> store (store_id));
+
+allow_tables_to_appear_in_same_query!(
+    bowel,
+    grocery_trip,
+    store,
+);

@@ -50,3 +50,27 @@ pub mod store {
         diesel::delete(store.filter(id.eq(del_store.id))).execute(conn)
     }
 }
+
+pub mod grocery_trip {
+    use super::*;
+    use diet_database::grocery_trip::*;
+
+    pub fn insert(conn: &MysqlConnection, trip: NewGroceryTrip) -> Result<usize> {
+        diesel::insert_into(schema::grocery_trip::table)
+            .values(&trip)
+            .execute(conn)
+    }
+
+    pub fn select_all(conn: &MysqlConnection) -> Result<Vec<GroceryTrip>> {
+        use schema::grocery_trip::dsl::*;
+        use schema::store::{name, self};
+        grocery_trip.inner_join(store::table)
+            .select((id, date, time, name))
+            .load(conn)
+    }
+
+    pub fn delete(conn: &MysqlConnection, del_trip: GroceryTrip) -> Result<usize> {
+        use schema::grocery_trip::dsl::*;
+        diesel::delete(grocery_trip.filter(id.eq(del_trip.id))).execute(conn)
+    }
+}

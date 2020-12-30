@@ -19,6 +19,7 @@ struct Model {
 pub enum PageName {
     Bowel,
     Store,
+    GroceryTrip,
 }
 
 impl PageName {
@@ -27,6 +28,7 @@ impl PageName {
         match self {
             Bowel => Page::Bowel(page::bowel::init()),
             Store => Page::Store(page::store::init()),
+            GroceryTrip => Page::GroceryTrip(page::grocery_trip::init()),
         }
     }
 
@@ -35,6 +37,7 @@ impl PageName {
         match self {
             Bowel => "Bowel Movements",
             Store => "Grocery Stores",
+            GroceryTrip => "Grocery Trips",
         }.to_string()
     }
 }
@@ -42,12 +45,14 @@ impl PageName {
 pub enum Page {
     Bowel(page::bowel::Model),
     Store(page::store::Model),
+    GroceryTrip(page::grocery_trip::Model),
 }
 
 pub enum Msg {
     LoadPage(Page),
     BowelPageUpdate(page::bowel::Msg),
     StorePageUpdate(page::store::Msg),
+    GroceryTripPageUpdate(page::grocery_trip::Msg),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -56,6 +61,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             match &page {
                 Page::Bowel(_) => orders.send_msg(Msg::BowelPageUpdate(page::bowel::Msg::load())),
                 Page::Store(_) => orders.send_msg(Msg::StorePageUpdate(page::store::Msg::load())),
+                Page::GroceryTrip(_) => orders.send_msg(Msg::GroceryTripPageUpdate(page::grocery_trip::Msg::load())),
             };
             model.page = page;
         }
@@ -69,6 +75,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 page::store::update(msg, model, &mut orders.proxy(Msg::StorePageUpdate));
             }
         }
+        Msg::GroceryTripPageUpdate(msg) => {
+            if let Page::GroceryTrip(model) = &mut model.page {
+                page::grocery_trip::update(msg, model, &mut orders.proxy(Msg::GroceryTripPageUpdate));
+            }
+        }
     }
 }
 
@@ -80,11 +91,12 @@ fn view_page(model: &Model) -> Node<Msg> {
     match &model.page {
         Page::Bowel(model) => model.view().map_msg(Msg::BowelPageUpdate),
         Page::Store(model) => model.view().map_msg(Msg::StorePageUpdate),
+        Page::GroceryTrip(model) => model.view().map_msg(Msg::GroceryTripPageUpdate),
     }
 }
 
 fn view_page_selector(_model: &Model) -> Node<Msg> {
-    let page_names = vec![PageName::Bowel, PageName::Store];
+    let page_names = vec![PageName::Bowel, PageName::Store, PageName::GroceryTrip];
     nav![
         C!["page-selector"],
         page_names.into_iter().map(|page_name| {

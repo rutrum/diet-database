@@ -76,6 +76,38 @@ mod store {
     }
 }
 
+mod grocery_trip {
+    use super::*;
+    use diet_database::grocery_trip::*;
+
+    #[get("/grocery_trip")]
+    pub fn get_all() -> Json<Vec<GroceryTrip>> {
+        let conn = db::create_connection();
+        let grocery_trips = db::grocery_trip::select_all(&conn).unwrap_or_default();
+        Json(grocery_trips)
+    }
+
+    #[post("/grocery_trip", data = "<grocery_trip>")]
+    pub fn add(grocery_trip: Json<NewGroceryTrip>) -> Status {
+        let grocery_trip = grocery_trip.into_inner();
+        let conn = db::create_connection();
+        match db::grocery_trip::insert(&conn, grocery_trip) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+
+    #[delete("/grocery_trip", data = "<grocery_trip>")]
+    pub fn delete(grocery_trip: Json<GroceryTrip>) -> Status {
+        let grocery_trip = grocery_trip.into_inner();
+        let conn = db::create_connection();
+        match db::grocery_trip::delete(&conn, grocery_trip) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+}
+
 fn main() -> Result<(), Error> {
     let cors = rocket_cors::CorsOptions {
         allowed_origins: AllowedOrigins::all(),
@@ -93,6 +125,9 @@ fn main() -> Result<(), Error> {
                 store::get_all,
                 store::add,
                 store::delete,
+                grocery_trip::get_all,
+                grocery_trip::add,
+                grocery_trip::delete,
             ],
         )
         .attach(cors)
