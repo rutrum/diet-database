@@ -15,6 +15,30 @@ struct Model {
     page: Page,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum PageName {
+    Bowel,
+    Store,
+}
+
+impl PageName {
+    fn init_with_data(self) -> Page {
+        use PageName::*;
+        match self {
+            Bowel => Page::Bowel(page::bowel::init()),
+            Store => Page::Store(page::store::init()),
+        }
+    }
+
+    fn display_name(&self) -> String {
+        use PageName::*;
+        match self {
+            Bowel => "Bowel Movements",
+            Store => "Grocery Stores",
+        }.to_string()
+    }
+}
+
 pub enum Page {
     Bowel(page::bowel::Model),
     Store(page::store::Model),
@@ -60,20 +84,15 @@ fn view_page(model: &Model) -> Node<Msg> {
 }
 
 fn view_page_selector(model: &Model) -> Node<Msg> {
+    let page_names = vec![PageName::Bowel, PageName::Store];
     nav![
         C!["page-selector"],
-        div![
-            "Bowel Movements",
-            ev(Ev::Click, |_| Msg::LoadPage(Page::Bowel(
-                page::bowel::init()
-            )))
-        ],
-        div![
-            "Grocery Stores",
-            ev(Ev::Click, |_| Msg::LoadPage(Page::Store(
-                page::store::init()
-            )))
-        ],
+        page_names.into_iter().map(|page_name| {
+            div![
+                page_name.display_name(),
+                ev(Ev::Click, move |_| Msg::LoadPage(page_name.init_with_data()))
+            ]
+        }),
     ]
 }
 
