@@ -6,6 +6,42 @@ use seed::{prelude::*, *};
 
 use super::{PageMsg, PageModel};
 
+/*
+pub enum GMsg<DATA, MSG> {
+    Fetch,
+    Fetched(Result<DATA, String>),
+    Update(MSG),
+    Delete(usize),
+    Deleted(Result<(), String>),
+    Submit,
+    Submitted(Result<(), String>),
+}
+
+impl PageMsg for GMsg<Vec<Store>, Msg> {
+    fn delete(i: usize) -> Self {
+        GMsg::Delete(i)
+    }
+    fn submit() -> Self {
+        GMsg::Submit
+    }
+    fn load() -> Self {
+        GMsg::Fetch
+    }
+}
+
+pub struct GModel<DATA: Tabular, FORM> {
+    data: DATA,
+    form: FORM,
+    err_msg: String,
+}
+
+impl PageModel<Vec<Store>> for GModel<Vec<Store>, Form> {
+    fn data(&self) -> &Vec<Store> {
+        &self.data
+    }
+}
+*/
+
 pub enum Msg {
     Fetch,
     Fetched(Result<Vec<Store>, String>),

@@ -1,20 +1,49 @@
 use seed::{prelude::*, *};
 use diet_database::Tabular;
+use crate::api_call;
 
 pub mod bowel;
 pub mod store;
+
+pub enum GMsg<DATA, MSG> {
+    Fetch,
+    Fetched(Result<DATA, String>),
+    Update(MSG),
+    Delete(usize),
+    Deleted(Result<(), String>),
+    Submit,
+    Submitted(Result<(), String>),
+}
+
+pub struct GModel<DATA: Tabular, FORM> {
+    data: DATA,
+    form: FORM,
+    err_msg: String,
+}
 
 pub trait PageMsg {
     /// Returns the msg cooresponding to deleting the ith item
     fn delete(_: usize) -> Self;
     fn submit() -> Self;
     fn load() -> Self;
+    //fn loaded<T: Tabular>(_: Result<T, String>) -> Self;
 }
 
 pub trait PageModel<T: Tabular> {
     fn data(&self) -> &T;
     fn error_msg(&self) -> &String;
     fn form_fields<G: 'static + PageMsg>(&self) -> Vec<Node<G>>;
+
+    /*
+    fn fetch<G: 'static + PageMsg>(&mut self, msg: G, orders: &mut impl Orders<G>) {
+        orders.perform_cmd({
+            async move {
+                let stores = api_call::store::get().await.unwrap_or_default();
+                G::loaded(Ok(stores))
+            }
+        });
+    }
+    */
 
     fn view<G: 'static + PageMsg>(&self) -> Node<G> {
         div![
