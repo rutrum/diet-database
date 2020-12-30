@@ -1,16 +1,12 @@
 #[cfg(feature = "database")]
 use crate::schema::bowel;
 
-use chrono::naive::{NaiveTime, NaiveDate};
-use serde::{Serialize, Deserialize};
+use chrono::naive::{NaiveDate, NaiveTime};
+use serde::{Deserialize, Serialize};
 
 use crate::Tabular;
 
-#[cfg_attr(
-    feature = "database",
-    derive(Insertable),
-    table_name = "bowel",
-)]
+#[cfg_attr(feature = "database", derive(Insertable), table_name = "bowel")]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct NewBowel {
     pub date: NaiveDate,
@@ -18,10 +14,7 @@ pub struct NewBowel {
     pub scale: i8,
 }
 
-#[cfg_attr(
-    feature = "database",
-    derive(Queryable),
-)]
+#[cfg_attr(feature = "database", derive(Queryable))]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Bowel {
     pub id: i32,
@@ -37,16 +30,18 @@ impl Tabular for Vec<Bowel> {
     }
 
     fn matrix(&self) -> Vec<Vec<String>> {
-        self.iter().map(|bowel| {
-            let time = match bowel.time {
-                None => String::new(), 
-                Some(t) => t.format("%-I:%M %p").to_string(),
-            };
-            vec![
-                bowel.date.format("%b %d %Y").to_string(),
-                time,
-                bowel.scale.to_string(),
-            ]
-        }).collect::<Vec<Vec<String>>>()
+        self.iter()
+            .map(|bowel| {
+                let time = match bowel.time {
+                    None => String::new(),
+                    Some(t) => t.format("%-I:%M %p").to_string(),
+                };
+                vec![
+                    bowel.date.format("%b %d %Y").to_string(),
+                    time,
+                    bowel.scale.to_string(),
+                ]
+            })
+            .collect::<Vec<Vec<String>>>()
     }
 }

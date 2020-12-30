@@ -7,10 +7,7 @@ pub mod bowel {
     use diet_database::bowel::*;
 
     pub async fn get() -> fetch::Result<Vec<Bowel>> {
-        fetch(format!("{}/bowel", API_URL))
-            .await?
-            .json()
-            .await
+        fetch(format!("{}/bowel", API_URL)).await?.json().await
     }
 
     pub async fn post(bowel: NewBowel) -> fetch::Result<Response> {
@@ -35,10 +32,7 @@ pub mod store {
     use diet_database::store::*;
 
     pub async fn get() -> fetch::Result<Vec<Store>> {
-        fetch(format!("{}/store", API_URL))
-            .await?
-            .json()
-            .await
+        fetch(format!("{}/store", API_URL)).await?.json().await
     }
 
     pub async fn post(store: NewStore) -> fetch::Result<Response> {

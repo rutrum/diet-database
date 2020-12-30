@@ -14,7 +14,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
-    bowel,
-    store,
-);
+allow_tables_to_appear_in_same_query!(bowel, store,);

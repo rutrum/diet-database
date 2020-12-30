@@ -4,8 +4,8 @@ use diet_database::db::schema;
 type Result<T> = std::result::Result<T, diesel::result::Error>;
 
 pub fn create_connection() -> MysqlConnection {
-    let database_url: String = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL environment variable not set");
+    let database_url: String =
+        std::env::var("DATABASE_URL").expect("DATABASE_URL environment variable not set");
 
     MysqlConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Cannot connect to database at {}", database_url))
@@ -22,14 +22,12 @@ pub mod bowel {
     }
 
     pub fn select_all(conn: &MysqlConnection) -> Result<Vec<Bowel>> {
-        schema::bowel::table
-            .load::<Bowel>(conn)
+        schema::bowel::table.load::<Bowel>(conn)
     }
 
     pub fn delete(conn: &MysqlConnection, del_bowel: Bowel) -> Result<usize> {
         use schema::bowel::dsl::*;
-        diesel::delete(bowel.filter(id.eq(del_bowel.id)))
-            .execute(conn)
+        diesel::delete(bowel.filter(id.eq(del_bowel.id))).execute(conn)
     }
 }
 
@@ -44,13 +42,11 @@ pub mod store {
     }
 
     pub fn select_all(conn: &MysqlConnection) -> Result<Vec<Store>> {
-        schema::store::table
-            .load::<Store>(conn)
+        schema::store::table.load::<Store>(conn)
     }
 
     pub fn delete(conn: &MysqlConnection, del_store: Store) -> Result<usize> {
         use schema::store::dsl::*;
-        diesel::delete(store.filter(id.eq(del_store.id)))
-            .execute(conn)
+        diesel::delete(store.filter(id.eq(del_store.id))).execute(conn)
     }
 }

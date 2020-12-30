@@ -2,12 +2,12 @@
 
 #[macro_use]
 extern crate rocket;
-extern crate rocket_cors;
-extern crate rocket_contrib;
 extern crate chrono;
+extern crate rocket_contrib;
+extern crate rocket_cors;
 
-use rocket_contrib::json::Json;
 use rocket::http::Status;
+use rocket_contrib::json::Json;
 use rocket_cors::{AllowedOrigins, Error};
 
 use api::db;
@@ -80,17 +80,21 @@ fn main() -> Result<(), Error> {
     let cors = rocket_cors::CorsOptions {
         allowed_origins: AllowedOrigins::all(),
         ..Default::default()
-    }.to_cors()?;
+    }
+    .to_cors()?;
 
     rocket::ignite()
-        .mount("/", routes![
-               bowel::get_all,
-               bowel::add,
-               bowel::delete,
-               store::get_all,
-               store::add,
-               store::delete,
-        ])
+        .mount(
+            "/",
+            routes![
+                bowel::get_all,
+                bowel::add,
+                bowel::delete,
+                store::get_all,
+                store::add,
+                store::delete,
+            ],
+        )
         .attach(cors)
         .launch();
 

@@ -16,11 +16,11 @@
 }
 .page-selector div {
   cursor: pointer;
-  background-color: #efefef;
+  background-color: whitesmoke;
   padding: 10px;
 }
 .page-selector div:hover {
-  background-color: #afcfef;
+  background-color: lightsteelblue;
 }
 
 .page {
@@ -28,7 +28,7 @@
   flex-direction: row;
 }
 .page .form {
-  background-color: #efefef;
+  background-color: whitesmoke;
   margin: 6px;
   padding: 10px;
 }
@@ -43,8 +43,11 @@
 .page .form button {
   width: 100%;
 }
+.page .form .error-msg {
+  color: firebrick;
+}
 .page table {
-  background-color: #efefef;
+  background-color: whitesmoke;
   margin: 6px;
   padding: 10px;
 }

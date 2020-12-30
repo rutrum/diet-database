@@ -1,9 +1,8 @@
-use seed::{prelude::*, *};
-use crate::Msg as SuperMsg;
-use crate::api_call;
 use super::get_event_value;
+use crate::api_call;
 use diet_database::store::*;
 use diet_database::Tabular;
+use seed::{prelude::*, *};
 
 pub enum Msg {
     Fetch,
@@ -33,7 +32,13 @@ pub struct Form {
 
 impl Form {
     fn to_new_store(&self) -> Result<NewStore, &'static str> {
-        Ok(NewStore{ name: self.name.clone() })
+        if self.name.is_empty() {
+            Err("Name is required")
+        } else {
+            Ok(NewStore {
+                name: self.name.clone(),
+            })
+        }
     }
 }
 
@@ -56,7 +61,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Fetched(result) => match result {
             Ok(stores) => model.stores = stores,
             Err(msg) => model.err_msg = msg,
-        }
+        },
         FormUpdate(update_msg) => {
             use FormUpdateMsg::*;
             match update_msg {
@@ -76,30 +81,31 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Deleted(result) => match result {
-            Ok(()) => {orders.send_msg(Fetch); },
-            Err(msg) => model.err_msg = msg,
-        }
-        Submit => {
-            log!("Submitting poo");
-            match model.form.to_new_store() {
-                Ok(nb) => {
-                    model.err_msg = String::new();
-                    orders.perform_cmd({
-                        async move {
-                            match api_call::store::post(nb).await {
-                                Ok(s) if s.status().is_ok() => Submitted(Ok(())),
-                                _ => Submitted(Err("Error submitting to server".to_string())),
-                            }
-                        }
-                    });
-                }
-                Err(err_msg) => model.err_msg = err_msg.to_string(),
+            Ok(()) => {
+                orders.send_msg(Fetch);
             }
-        }
-        Submitted(result) => match result {
-            Ok(()) => {orders.send_msg(Fetch); },
             Err(msg) => model.err_msg = msg,
-        }
+        },
+        Submit => match model.form.to_new_store() {
+            Ok(nb) => {
+                model.err_msg = String::new();
+                orders.perform_cmd({
+                    async move {
+                        match api_call::store::post(nb).await {
+                            Ok(s) if s.status().is_ok() => Submitted(Ok(())),
+                            _ => Submitted(Err("Error submitting to server".to_string())),
+                        }
+                    }
+                });
+            }
+            Err(err_msg) => model.err_msg = err_msg.to_string(),
+        },
+        Submitted(result) => match result {
+            Ok(()) => {
+                orders.send_msg(Fetch);
+            }
+            Err(msg) => model.err_msg = msg,
+        },
     }
     log!(model);
 }
@@ -111,20 +117,11 @@ pub fn view(model: &Model) -> Node<Msg> {
         C!["page"],
         view_form(model),
         table![
-            tr![
-                headers.iter().map(|header| {
-                    th![header]
-                }),
-            ],
+            tr![headers.iter().map(|header| { th![header] }),],
             matrix.iter().enumerate().map(|(i, row)| {
                 tr![
-                    row.iter().map(|cell| {
-                        td![cell]
-                    }),
-                    button![
-                        "delete",
-                        ev(Ev::Click, move |_| Msg::Delete(i)),
-                    ]
+                    row.iter().map(|cell| { td![cell] }),
+                    button!["delete", ev(Ev::Click, move |_| Msg::Delete(i)),]
                 ]
             }),
         ]
@@ -135,17 +132,13 @@ pub fn view_form(model: &Model) -> Node<Msg> {
     div![
         C!["form"],
         div![
-            label![ "Name of store:" ],
-            input![ attrs!(At::Type => "text") ],
-            ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Name(get_event_value(ev)))),
+            label!["Name of store:"],
+            input![attrs!(At::Type => "text")],
+            ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Name(
+                get_event_value(ev)
+            ))),
         ],
-        button![
-            "Submit Poo",
-            ev(Ev::Click, |_| Msg::Submit),
-        ],
-        div![
-            C!["error-msg"],
-            &model.err_msg,
-        ]
+        button!["Submit", ev(Ev::Click, |_| Msg::Submit),],
+        div![C!["error-msg"], &model.err_msg,]
     ]
 }
