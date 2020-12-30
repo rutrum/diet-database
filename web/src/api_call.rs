@@ -1,7 +1,42 @@
 use seed::prelude::*;
+use crate::PageName;
+use diet_database::Tabular;
+use serde::{Serialize, Deserialize};
 
 const API_URL: &'static str = "http://localhost:8000";
 
+#[derive(Debug, Clone, Copy)]
+pub enum ApiCall {
+    Bowel,
+    Store,
+}
+
+impl ApiCall {
+    fn lower(&self) -> String {
+        format!("{:?}", self).to_lowercase()
+    }
+
+    pub async fn get<T: 'static + for<'de> Deserialize<'de>>(&self) -> fetch::Result<T> {
+        fetch(format!("{}/{}", API_URL, self.lower())).await?.json().await
+    }
+
+    pub async fn post<NEW: Serialize>(&self, item: NEW) -> fetch::Result<Response> {
+        fetch::Request::new(format!("{}/{}", API_URL, self.lower()))
+            .method(Method::Post)
+            .json(&item)?
+            .fetch()
+            .await
+    }
+
+    pub async fn delete<ITEM: Serialize>(&self, item: ITEM) -> fetch::Result<Response> {
+        fetch::Request::new(format!("{}/{}", API_URL, self.lower()))
+            .method(Method::Delete)
+            .json(&item)?
+            .fetch()
+            .await
+    }
+}
+/*
 pub mod bowel {
     use super::*;
     use diet_database::bowel::*;
@@ -51,3 +86,4 @@ pub mod store {
             .await
     }
 }
+*/

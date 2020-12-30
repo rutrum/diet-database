@@ -1,9 +1,7 @@
 use super::get_event_value;
-use crate::api_call;
-use crate::Msg as SuperMsg;
+use crate::api_call::ApiCall;
 use chrono::naive::{NaiveDate, NaiveTime};
 use diet_database::bowel::*;
-use diet_database::Tabular;
 use seed::{prelude::*, *};
 
 use super::*;
@@ -116,7 +114,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Fetch => {
             orders.perform_cmd({
                 async move {
-                    let bowels = api_call::bowel::get().await.unwrap_or_default();
+                    let bowels = ApiCall::Bowel.get().await.unwrap_or_default();
                     Msg::Fetched(Ok(bowels))
                 }
             });
@@ -137,7 +135,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             let b = model.bowels[idx];
             orders.perform_cmd({
                 async move {
-                    match api_call::bowel::delete(b).await {
+                    match ApiCall::Bowel.delete(b).await {
                         Ok(s) if s.status().is_ok() => Deleted(Ok(())),
                         _ => Deleted(Err("Error deleting on server".to_string())),
                     }
@@ -155,7 +153,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 model.err_msg = String::new();
                 orders.perform_cmd({
                     async move {
-                        match api_call::bowel::post(nb).await {
+                        match ApiCall::Bowel.post(nb).await {
                             Ok(s) if s.status().is_ok() => Submitted(Ok(())),
                             _ => Submitted(Err("Error submitting to server".to_string())),
                         }

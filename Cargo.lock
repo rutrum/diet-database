@@ -1876,6 +1876,7 @@ dependencies = [
  "chrono",
  "diet_database",
  "seed",
+ "serde",
  "wasm-bindgen",
  "web-sys",
 ]

@@ -1,46 +1,9 @@
 use super::get_event_value;
-use crate::api_call;
+use crate::api_call::ApiCall;
 use diet_database::store::*;
-use diet_database::Tabular;
 use seed::{prelude::*, *};
 
 use super::{PageMsg, PageModel};
-
-/*
-pub enum GMsg<DATA, MSG> {
-    Fetch,
-    Fetched(Result<DATA, String>),
-    Update(MSG),
-    Delete(usize),
-    Deleted(Result<(), String>),
-    Submit,
-    Submitted(Result<(), String>),
-}
-
-impl PageMsg for GMsg<Vec<Store>, Msg> {
-    fn delete(i: usize) -> Self {
-        GMsg::Delete(i)
-    }
-    fn submit() -> Self {
-        GMsg::Submit
-    }
-    fn load() -> Self {
-        GMsg::Fetch
-    }
-}
-
-pub struct GModel<DATA: Tabular, FORM> {
-    data: DATA,
-    form: FORM,
-    err_msg: String,
-}
-
-impl PageModel<Vec<Store>> for GModel<Vec<Store>, Form> {
-    fn data(&self) -> &Vec<Store> {
-        &self.data
-    }
-}
-*/
 
 pub enum Msg {
     Fetch,
@@ -126,7 +89,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             log!("Fetching stores");
             orders.perform_cmd({
                 async move {
-                    let stores = api_call::store::get().await.unwrap_or_default();
+                    let stores = ApiCall::Store.get().await.unwrap_or_default();
                     Msg::Fetched(Ok(stores))
                 }
             });
@@ -146,7 +109,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             let s = model.stores[idx].clone();
             orders.perform_cmd({
                 async move {
-                    match api_call::store::delete(s).await {
+                    match ApiCall::Store.delete(s).await {
                         Ok(s) if s.status().is_ok() => Deleted(Ok(())),
                         _ => Deleted(Err("Error deleting on server".to_string())),
                     }
@@ -164,7 +127,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 model.err_msg = String::new();
                 orders.perform_cmd({
                     async move {
-                        match api_call::store::post(nb).await {
+                        match ApiCall::Store.post(nb).await {
                             Ok(s) if s.status().is_ok() => Submitted(Ok(())),
                             _ => Submitted(Err("Error submitting to server".to_string())),
                         }

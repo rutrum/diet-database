@@ -83,7 +83,7 @@ fn view_page(model: &Model) -> Node<Msg> {
     }
 }
 
-fn view_page_selector(model: &Model) -> Node<Msg> {
+fn view_page_selector(_model: &Model) -> Node<Msg> {
     let page_names = vec![PageName::Bowel, PageName::Store];
     nav![
         C!["page-selector"],
