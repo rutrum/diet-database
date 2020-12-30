@@ -6,6 +6,7 @@ mod api_call;
 mod page;
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+    orders.send_msg(Msg::BowelPageUpdate(page::bowel::Msg::Fetch));
     Model {
         page: Page::Bowel(page::bowel::init()),
     }
@@ -28,7 +29,13 @@ pub enum Msg {
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::LoadPage(page) => model.page = page,
+        Msg::LoadPage(page) => {
+            match &page {
+                Page::Bowel(_) => orders.send_msg(Msg::BowelPageUpdate(page::bowel::Msg::Fetch)),
+                Page::Store(_) => orders.send_msg(Msg::StorePageUpdate(page::store::Msg::Fetch)),
+            };
+            model.page = page;
+        }
         Msg::BowelPageUpdate(msg) => {
             if let Page::Bowel(model) = &mut model.page {
                 page::bowel::update(msg, model, &mut orders.proxy(Msg::BowelPageUpdate));
@@ -44,26 +51,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
 fn view(model: &Model) -> Node<Msg> {
     div![
+        C!["content"],
         view_page_selector(model),
         view_page(model),
-        /*
-        button![
-            "Load Bowels",
-            ev(Ev::Click, |_| Msg::LoadBowels),
-        ],
-        button![
-            "Add Bowel",
-            ev(Ev::Click, |_| Msg::ShowAddForm(FormType::Bowel)),
-        ],
-        view_tabular(&model.bowels),
-        model.form.as_ref().map(|form_type| {
-            match form_type {
-                FormType::Bowel => {
-                    form::bowel::view(&model.bowel_form).map_msg(Msg::BowelFormUpdate)
-                }
-            }
-        })
-        */
     ]
 }
 
@@ -76,12 +66,13 @@ fn view_page(model: &Model) -> Node<Msg> {
 
 fn view_page_selector(model: &Model) -> Node<Msg> {
     nav![
+        C!["page-selector"],
         div![
-            "Bowel",
+            "Bowel Movements",
             ev(Ev::Click, |_| Msg::LoadPage(Page::Bowel(page::bowel::init())))
         ],
         div![
-            "Store",
+            "Grocery Stores",
             ev(Ev::Click, |_| Msg::LoadPage(Page::Store(page::store::init())))
         ],
     ]

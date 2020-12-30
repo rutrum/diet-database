@@ -50,7 +50,7 @@ impl Form {
 pub fn init() -> Model {
     Model {
         form: Form {
-            scale: 3.to_string(),
+            scale: 7.to_string(),
             ..Default::default()
         },
         ..Default::default()
@@ -126,11 +126,8 @@ pub fn view(model: &Model) -> Node<Msg> {
     let headers = model.bowels.headers();
     let matrix = model.bowels.matrix();
     div![
-        button![
-            "Load Bowels",
-            ev(Ev::Click, |_| Msg::Fetch),
-        ],
-        view_form(),
+        C!["page"],
+        view_form(model),
         table![
             tr![
                 headers.iter().map(|header| {
@@ -152,8 +149,9 @@ pub fn view(model: &Model) -> Node<Msg> {
     ]
 }
 
-pub fn view_form() -> Node<Msg> {
+pub fn view_form(model: &Model) -> Node<Msg> {
     div![
+        C!["form"],
         div![
             label![ "Date of poo: " ],
             input![ attrs!(At::Type => "Date") ],
@@ -173,5 +171,9 @@ pub fn view_form() -> Node<Msg> {
             "Submit Poo",
             ev(Ev::Click, |_| Msg::Submit),
         ],
+        div![
+            C!["error-msg"],
+            &model.err_msg,
+        ]
     ]
 }

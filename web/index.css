@@ -1,0 +1,50 @@
+* {
+  box-sizing: border-box;
+}
+
+.content {
+  display: flex;
+  flex-direction: row;
+}
+
+.page-selector {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 6px;
+  width: 200px;
+}
+.page-selector div {
+  cursor: pointer;
+  background-color: #efefef;
+  padding: 10px;
+}
+.page-selector div:hover {
+  background-color: #afcfef;
+}
+
+.page {
+  display: flex;
+  flex-direction: row;
+}
+.page .form {
+  background-color: #efefef;
+  margin: 6px;
+  padding: 10px;
+}
+.page .form div {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+.page .form div label {
+  font-style: italic;
+}
+.page .form button {
+  width: 100%;
+}
+.page table {
+  background-color: #efefef;
+  margin: 6px;
+  padding: 10px;
+}

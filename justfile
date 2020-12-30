@@ -31,8 +31,8 @@ fmt:
 watch-check:
     watchexec -- cargo check --workspace
 
-#css:
-#    (cd client; grass scss/index.scss > index.css)
+css:
+    (cd web; grass scss/index.scss > index.css)
 
-#watch-css:
-#    watchexec -w client/scss -- just css
+watch-css:
+    watchexec -w web/scss -- just css

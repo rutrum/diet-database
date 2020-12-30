@@ -108,11 +108,8 @@ pub fn view(model: &Model) -> Node<Msg> {
     let headers = model.stores.headers();
     let matrix = model.stores.matrix();
     div![
-        button![
-            "Load Stores",
-            ev(Ev::Click, |_| Msg::Fetch),
-        ],
-        view_form(),
+        C!["page"],
+        view_form(model),
         table![
             tr![
                 headers.iter().map(|header| {
@@ -134,8 +131,9 @@ pub fn view(model: &Model) -> Node<Msg> {
     ]
 }
 
-pub fn view_form() -> Node<Msg> {
+pub fn view_form(model: &Model) -> Node<Msg> {
     div![
+        C!["form"],
         div![
             label![ "Name of store:" ],
             input![ attrs!(At::Type => "text") ],
@@ -145,5 +143,9 @@ pub fn view_form() -> Node<Msg> {
             "Submit Poo",
             ev(Ev::Click, |_| Msg::Submit),
         ],
+        div![
+            C!["error-msg"],
+            &model.err_msg,
+        ]
     ]
 }
