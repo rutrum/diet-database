@@ -2,12 +2,13 @@ use crate::page::{get_event_value, PageError};
 use chrono::naive::{NaiveDate, NaiveTime};
 use seed::{prelude::*, *};
 
-struct Form {
-    inputs: Vec<Input>,
+#[derive(Clone, Default, Debug)]
+pub struct Form {
+    pub inputs: Vec<Input>,
 }
 
 impl Form {
-    fn update(&mut self, msg: FormMsg) {
+    pub fn update(&mut self, msg: FormMsg) {
         match msg {
             FormMsg::UpdateValue(i, s) => {
                 self.inputs[i].set(s);
@@ -15,7 +16,7 @@ impl Form {
         }
     }
 
-    fn view(&self) -> Node<FormMsg> {
+    pub fn view(&self) -> Node<FormMsg> {
         div![self
             .inputs
             .iter()
@@ -23,25 +24,24 @@ impl Form {
             .map(|(i, input)| input.view(i))]
     }
 
-    fn get_input_data(&self) -> Result<Vec<InputData>, PageError> {
+    pub fn get_input_data(&self) -> Result<Vec<InputData>, PageError> {
         self.inputs.iter().map(|input| input.get_data()).collect() // shouldn't work?!?!?
     }
 }
 
-struct Input {
+#[derive(Clone, Debug)]
+pub struct Input {
     name: String,
     value: String,
-    nullable: bool,
     typ: InputType,
 }
 
 impl Input {
-    fn new(name: String, nullable: bool, typ: InputType) -> Self {
+    pub fn new(name: &str, typ: InputType) -> Self {
         Self {
-            name,
+            name: name.to_string(),
             value: String::new(),
             typ,
-            nullable,
         }
     }
 
@@ -59,7 +59,7 @@ impl Input {
 }
 
 #[derive(Clone, Copy, Debug)]
-enum InputType {
+pub enum InputType {
     Date,
     Time,
     TimeOption,
@@ -111,7 +111,7 @@ impl InputType {
     }
 }
 
-enum InputData {
+pub enum InputData {
     Date(NaiveDate),
     Time(NaiveTime),
     TimeOption(Option<NaiveTime>),
@@ -120,7 +120,7 @@ enum InputData {
     IntOption(Option<i32>),
 }
 
-enum FormMsg {
+pub enum FormMsg {
     UpdateValue(usize, String),
 }
 

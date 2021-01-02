@@ -44,7 +44,7 @@ pub struct Model {
     err_msg: String,
 }
 
-impl PageModel<Vec<GroceryTrip>> for Model {
+impl PageModel<Vec<GroceryTrip>, Msg> for Model {
     fn data(&self) -> &Vec<GroceryTrip> {
         &self.trips
     }
@@ -53,7 +53,7 @@ impl PageModel<Vec<GroceryTrip>> for Model {
         &self.err_msg
     }
 
-    fn form_fields<T: 'static>(&self) -> Vec<Node<T>> {
+    fn form_fields(&self) -> Vec<Node<Msg>> {
         nodes![
             div![
                 label!["Date: "],

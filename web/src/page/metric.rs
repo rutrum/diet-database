@@ -46,7 +46,7 @@ pub struct Model {
     err_msg: String,
 }
 
-impl PageModel<Vec<Metric>> for Model {
+impl PageModel<Vec<Metric>, Msg> for Model {
     fn data(&self) -> &Vec<Metric> {
         &self.metrics
     }
@@ -55,7 +55,7 @@ impl PageModel<Vec<Metric>> for Model {
         &self.err_msg
     }
 
-    fn form_fields<T: 'static>(&self) -> Vec<Node<T>> {
+    fn form_fields(&self) -> Vec<Node<Msg>> {
         nodes![
             div![
                 label!["Date: "],

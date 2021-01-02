@@ -38,7 +38,7 @@ pub struct Model {
     err_msg: String,
 }
 
-impl PageModel<Vec<Store>> for Model {
+impl PageModel<Vec<Store>, Msg> for Model {
     fn data(&self) -> &Vec<Store> {
         &self.stores
     }
@@ -47,7 +47,7 @@ impl PageModel<Vec<Store>> for Model {
         &self.err_msg
     }
 
-    fn form_fields<G: 'static + PageMsg>(&self) -> Vec<Node<G>> {
+    fn form_fields(&self) -> Vec<Node<Msg>> {
         nodes![div![
             label!["Name of store:"],
             input![attrs!(At::Type => "text")],

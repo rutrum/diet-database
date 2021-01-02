@@ -15,16 +15,16 @@ pub trait PageMsg {
     fn load() -> Self;
 }
 
-pub trait PageModel<T: Tabular> {
+pub trait PageModel<T: Tabular, M: 'static + PageMsg> {
     fn data(&self) -> &T;
     fn error_msg(&self) -> &String;
-    fn form_fields<G: 'static + PageMsg>(&self) -> Vec<Node<G>>;
+    fn form_fields(&self) -> Vec<Node<M>>;
 
-    fn view<G: 'static + PageMsg>(&self) -> Node<G> {
+    fn view(&self) -> Node<M> {
         div![C!["page"], self.view_form(), self.view_table(),]
     }
 
-    fn view_table<G: 'static + PageMsg>(&self) -> Node<G> {
+    fn view_table(&self) -> Node<M> {
         let headers = self.data().headers();
         let matrix = self.data().matrix();
         table![
@@ -36,7 +36,7 @@ pub trait PageModel<T: Tabular> {
         ]
     }
 
-    fn view_form<G: 'static + PageMsg>(&self) -> Node<G> {
+    fn view_form(&self) -> Node<M> {
         div![
             C!["form"],
             self.form_fields(),

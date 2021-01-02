@@ -5,11 +5,12 @@ use diet_database::bowel::*;
 use seed::{prelude::*, *};
 
 use super::*;
+use crate::form::*;
 
 pub enum Msg {
     Fetch,
     Fetched(Result<Vec<Bowel>, PageError>),
-    FormUpdate(FormUpdateMsg),
+    FormUpdate(FormMsg),
     Delete(usize),
     Deleted(Result<(), PageError>),
     Submit,
@@ -28,12 +29,6 @@ impl PageMsg for Msg {
     }
 }
 
-pub enum FormUpdateMsg {
-    Date(String),
-    Time(String),
-    Scale(String),
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct Model {
     bowels: Vec<Bowel>,
@@ -41,7 +36,7 @@ pub struct Model {
     err_msg: String,
 }
 
-impl PageModel<Vec<Bowel>> for Model {
+impl PageModel<Vec<Bowel>, Msg> for Model {
     fn data(&self) -> &Vec<Bowel> {
         &self.bowels
     }
@@ -50,58 +45,21 @@ impl PageModel<Vec<Bowel>> for Model {
         &self.err_msg
     }
 
-    fn form_fields<T: 'static>(&self) -> Vec<Node<T>> {
+    fn form_fields(&self) -> Vec<Node<Msg>> {
         nodes![
-            div![
-                label!["Date: "],
-                input![attrs!(At::Type => "Date")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Date(
-                    get_event_value(ev)
-                ))),
-            ],
-            div![
-                label!["Time: "],
-                input![attrs!(At::Type => "Time")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Time(
-                    get_event_value(ev)
-                ))),
-            ],
-            div![
-                label!["Scale: "],
-                input![attrs!(At::Type => "Range", At::Min => 1, At::Max => 7)],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Scale(
-                    get_event_value(ev)
-                ))),
-            ],
+            vec![self.form.view().map_msg(Msg::FormUpdate)],
         ]
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct Form {
-    date: String,
-    time: String,
-    scale: String,
-}
-
-impl Form {
-    fn to_new_bowel(&self) -> Result<NewBowel, PageError> {
-        let date = parse_date_input(&self.date)?;
-        let time = parse_time_input(&self.time).ok();
-        let scale = self
-            .scale
-            .parse::<i8>()
-            .map_err(|_| PageError::form("scale"))?;
-
-        Ok(NewBowel { date, time, scale })
     }
 }
 
 pub fn init() -> Model {
     Model {
         form: Form {
-            scale: 7.to_string(),
-            ..Default::default()
+            inputs: vec![
+                Input::new("Date", InputType::Date),
+                Input::new("Time", InputType::TimeOption),
+                Input::new("Scale", InputType::Range(1, 7)),
+            ]
         },
         ..Default::default()
     }
@@ -125,12 +83,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Err(msg) => model.err_msg = msg.to_string(),
         },
         FormUpdate(update_msg) => {
-            use FormUpdateMsg::*;
-            match update_msg {
-                Date(s) => model.form.date = s,
-                Time(s) => model.form.time = s,
-                Scale(s) => model.form.scale = s,
-            }
+            model.form.update(update_msg);
         }
         Delete(idx) => {
             let b = model.bowels[idx];
@@ -149,19 +102,26 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             }
             Err(msg) => model.err_msg = msg.to_string(),
         },
-        Submit => match model.form.to_new_bowel() {
-            Ok(nb) => {
-                model.err_msg = String::new();
-                orders.perform_cmd({
-                    async move {
-                        match ApiCall::Bowel.post(nb).await {
-                            Ok(s) if s.status().is_ok() => Submitted(Ok(())),
-                            _ => Submitted(Err(PageError::Submit)),
+        Submit => {
+            match model.form.get_input_data() {
+                Ok(inputs) => {
+                    match NewBowel::from_input_data(inputs) {
+                        Ok(nb) => {
+                            model.err_msg = String::new();
+                            orders.perform_cmd({
+                                async move {
+                                    match ApiCall::Bowel.post(nb).await {
+                                        Ok(s) if s.status().is_ok() => Submitted(Ok(())),
+                                        _ => Submitted(Err(PageError::Submit)),
+                                    }
+                                }
+                            });
                         }
+                        Err(err_msg) => model.err_msg = err_msg.to_string(),
                     }
-                });
+                }
+                Err(e) => model.err_msg = e.to_string(),
             }
-            Err(err_msg) => model.err_msg = err_msg.to_string(),
         },
         Submitted(result) => match result {
             Ok(()) => {
