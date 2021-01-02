@@ -88,7 +88,10 @@ impl Form {
     fn to_new_bowel(&self) -> Result<NewBowel, PageError> {
         let date = parse_date_input(&self.date)?;
         let time = parse_time_input(&self.time).ok();
-        let scale = self.scale.parse::<i8>().map_err(|_| PageError::form("scale"))?;
+        let scale = self
+            .scale
+            .parse::<i8>()
+            .map_err(|_| PageError::form("scale"))?;
 
         Ok(NewBowel { date, time, scale })
     }

@@ -39,9 +39,4 @@ table! {
 
 joinable!(grocery_trip -> store (store_id));
 
-allow_tables_to_appear_in_same_query!(
-    bowel,
-    grocery_trip,
-    metric,
-    store,
-);
+allow_tables_to_appear_in_same_query!(bowel, grocery_trip, metric, store,);

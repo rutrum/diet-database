@@ -95,23 +95,23 @@ impl PageModel<Vec<Metric>> for Model {
             div![
                 label!["Waist: "],
                 input![attrs!(At::Type => "Text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::WaistCircum(
-                    get_event_value(ev)
-                ))),
+                ev(Ev::Change, |ev| Msg::FormUpdate(
+                    FormUpdateMsg::WaistCircum(get_event_value(ev))
+                )),
             ],
             div![
                 label!["Chest: "],
                 input![attrs!(At::Type => "Text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::ChestCircum(
-                    get_event_value(ev)
-                ))),
+                ev(Ev::Change, |ev| Msg::FormUpdate(
+                    FormUpdateMsg::ChestCircum(get_event_value(ev))
+                )),
             ],
             div![
                 label!["Thigh: "],
                 input![attrs!(At::Type => "Text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::ThighCircum(
-                    get_event_value(ev)
-                ))),
+                ev(Ev::Change, |ev| Msg::FormUpdate(
+                    FormUpdateMsg::ThighCircum(get_event_value(ev))
+                )),
             ],
         ]
     }
@@ -140,7 +140,16 @@ impl Form {
         let chest_circum = self.chest_circum.parse::<f32>().ok();
         let thigh_circum = self.thigh_circum.parse::<f32>().ok();
 
-        Ok(NewMetric { date, time, weight, body_fat, gut_circum, waist_circum, chest_circum, thigh_circum })
+        Ok(NewMetric {
+            date,
+            time,
+            weight,
+            body_fat,
+            gut_circum,
+            waist_circum,
+            chest_circum,
+            thigh_circum,
+        })
     }
 }
 

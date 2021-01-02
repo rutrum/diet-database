@@ -1,8 +1,8 @@
-use seed::prelude::*;
 use crate::PageName;
+use convert_case::{Case, Casing};
 use diet_database::Tabular;
-use serde::{Serialize, Deserialize};
-use convert_case::{Casing, Case};
+use seed::prelude::*;
+use serde::{Deserialize, Serialize};
 
 const API_URL: &'static str = "http://localhost:8000";
 
@@ -20,7 +20,10 @@ impl ApiCall {
     }
 
     pub async fn get<T: 'static + for<'de> Deserialize<'de>>(&self) -> fetch::Result<T> {
-        fetch(format!("{}/{}", API_URL, self.lower())).await?.json().await
+        fetch(format!("{}/{}", API_URL, self.lower()))
+            .await?
+            .json()
+            .await
     }
 
     pub async fn post<NEW: Serialize>(&self, item: NEW) -> fetch::Result<Response> {

@@ -9,9 +9,9 @@ pub mod db;
 pub use db::schema;
 
 pub mod bowel;
-pub mod store;
 pub mod grocery_trip;
 pub mod metric;
+pub mod store;
 
 mod table;
 pub use table::Tabular;

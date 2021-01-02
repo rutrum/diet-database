@@ -83,8 +83,9 @@ pub mod grocery_trip {
 
     pub fn select_all(conn: &MysqlConnection) -> Result<Vec<GroceryTrip>> {
         use schema::grocery_trip::dsl::*;
-        use schema::store::{name, self};
-        grocery_trip.inner_join(store::table)
+        use schema::store::{self, name};
+        grocery_trip
+            .inner_join(store::table)
             .select((id, date, time, name))
             .load(conn)
     }

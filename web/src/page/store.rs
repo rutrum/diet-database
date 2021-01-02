@@ -48,17 +48,14 @@ impl PageModel<Vec<Store>> for Model {
     }
 
     fn form_fields<G: 'static + PageMsg>(&self) -> Vec<Node<G>> {
-        nodes![
-            div![
-                label!["Name of store:"],
-                input![attrs!(At::Type => "text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Name(
-                    get_event_value(ev)
-                ))),
-            ],
-        ]
+        nodes![div![
+            label!["Name of store:"],
+            input![attrs!(At::Type => "text")],
+            ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Name(
+                get_event_value(ev)
+            ))),
+        ],]
     }
-
 }
 
 #[derive(Debug, Clone, Default)]

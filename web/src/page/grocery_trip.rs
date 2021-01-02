@@ -73,9 +73,9 @@ impl PageModel<Vec<GroceryTrip>> for Model {
                 label!["Store: "],
                 select![
                     option![],
-                    self.stores.iter().map(|store| {
-                        option![ attrs!(At::Value => store.id), &store.name ]
-                    }),
+                    self.stores
+                        .iter()
+                        .map(|store| { option![attrs!(At::Value => store.id), &store.name] }),
                     ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::StoreId(
                         get_event_value(ev)
                     ))),
@@ -96,9 +96,16 @@ impl Form {
     fn to_new_grocery_trip(&self) -> Result<NewGroceryTrip, PageError> {
         let date = parse_date_input(&self.date)?;
         let time = parse_time_input(&self.time).ok();
-        let store_id = self.store_id.parse::<i32>().map_err(|_| PageError::form("store id"))?;
+        let store_id = self
+            .store_id
+            .parse::<i32>()
+            .map_err(|_| PageError::form("store id"))?;
 
-        Ok(NewGroceryTrip { date, time, store_id })
+        Ok(NewGroceryTrip {
+            date,
+            time,
+            store_id,
+        })
     }
 }
 

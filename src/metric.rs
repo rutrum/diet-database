@@ -35,7 +35,16 @@ pub struct Metric {
 
 impl Tabular for Vec<Metric> {
     fn headers(&self) -> Vec<String> {
-        let v = vec!["Date", "Time", "Weight", "Body Fat %", "Gut", "Waist", "Chest", "Thigh"];
+        let v = vec![
+            "Date",
+            "Time",
+            "Weight",
+            "Body Fat %",
+            "Gut",
+            "Waist",
+            "Chest",
+            "Thigh",
+        ];
         v.iter().map(|x| x.to_string()).collect()
     }
 
@@ -52,9 +61,18 @@ impl Tabular for Vec<Metric> {
                     metric.weight.map(|x| x.to_string()).unwrap_or_default(),
                     metric.body_fat.map(|x| x.to_string()).unwrap_or_default(),
                     metric.gut_circum.map(|x| x.to_string()).unwrap_or_default(),
-                    metric.waist_circum.map(|x| x.to_string()).unwrap_or_default(),
-                    metric.chest_circum.map(|x| x.to_string()).unwrap_or_default(),
-                    metric.thigh_circum.map(|x| x.to_string()).unwrap_or_default(),
+                    metric
+                        .waist_circum
+                        .map(|x| x.to_string())
+                        .unwrap_or_default(),
+                    metric
+                        .chest_circum
+                        .map(|x| x.to_string())
+                        .unwrap_or_default(),
+                    metric
+                        .thigh_circum
+                        .map(|x| x.to_string())
+                        .unwrap_or_default(),
                 ]
             })
             .collect::<Vec<Vec<String>>>()

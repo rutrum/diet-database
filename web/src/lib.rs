@@ -1,6 +1,7 @@
 use seed::{prelude::*, *};
 
 mod api_call;
+mod form;
 mod page;
 use page::{PageModel, PageMsg};
 
@@ -41,7 +42,8 @@ impl PageName {
             Store => "Grocery Stores",
             GroceryTrip => "Grocery Trips",
             Metric => "Body Metrics",
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -66,8 +68,12 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             match &page {
                 Page::Bowel(_) => orders.send_msg(Msg::BowelPageUpdate(page::bowel::Msg::load())),
                 Page::Store(_) => orders.send_msg(Msg::StorePageUpdate(page::store::Msg::load())),
-                Page::GroceryTrip(_) => orders.send_msg(Msg::GroceryTripPageUpdate(page::grocery_trip::Msg::load())),
-                Page::Metric(_) => orders.send_msg(Msg::MetricPageUpdate(page::metric::Msg::load())),
+                Page::GroceryTrip(_) => {
+                    orders.send_msg(Msg::GroceryTripPageUpdate(page::grocery_trip::Msg::load()))
+                }
+                Page::Metric(_) => {
+                    orders.send_msg(Msg::MetricPageUpdate(page::metric::Msg::load()))
+                }
             };
             model.page = page;
         }
@@ -83,7 +89,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::GroceryTripPageUpdate(msg) => {
             if let Page::GroceryTrip(model) = &mut model.page {
-                page::grocery_trip::update(msg, model, &mut orders.proxy(Msg::GroceryTripPageUpdate));
+                page::grocery_trip::update(
+                    msg,
+                    model,
+                    &mut orders.proxy(Msg::GroceryTripPageUpdate),
+                );
             }
         }
         Msg::MetricPageUpdate(msg) => {
@@ -108,7 +118,10 @@ fn view_page(model: &Model) -> Node<Msg> {
 }
 
 fn view_page_selector(_model: &Model) -> Node<Msg> {
-    let page_names = vec![PageName::Bowel, PageName::Store, PageName::GroceryTrip,
+    let page_names = vec![
+        PageName::Bowel,
+        PageName::Store,
+        PageName::GroceryTrip,
         PageName::Metric,
     ];
     nav![
@@ -116,7 +129,9 @@ fn view_page_selector(_model: &Model) -> Node<Msg> {
         page_names.into_iter().map(|page_name| {
             div![
                 page_name.display_name(),
-                ev(Ev::Click, move |_| Msg::LoadPage(page_name.init_with_data()))
+                ev(Ev::Click, move |_| Msg::LoadPage(
+                    page_name.init_with_data()
+                ))
             ]
         }),
     ]
