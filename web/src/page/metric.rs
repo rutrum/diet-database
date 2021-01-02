@@ -43,17 +43,14 @@ pub enum FormUpdateMsg {
 pub struct Model {
     metrics: Vec<Metric>,
     form: Form,
-    err_msg: String,
+    err: Option<PageError>
 }
 
 impl PageModel<Vec<Metric>, Msg> for Model {
     fn data(&self) -> &Vec<Metric> {
         &self.metrics
     }
-
-    fn error_msg(&self) -> &String {
-        &self.err_msg
-    }
+    fn error(&self) -> Option<&PageError> { self.err.as_ref() }
 
     fn form_fields(&self) -> Vec<Node<Msg>> {
         nodes![
@@ -174,7 +171,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Fetched(result) => match result {
             Ok(metrics) => model.metrics = metrics,
-            Err(msg) => model.err_msg = msg.to_string(),
+            Err(err) => model.err = Some(err),
         },
         FormUpdate(update_msg) => {
             use FormUpdateMsg::*;
@@ -204,11 +201,11 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Ok(()) => {
                 orders.send_msg(Fetch);
             }
-            Err(msg) => model.err_msg = msg.to_string(),
+            Err(err) => model.err = Some(err),
         },
         Submit => match model.form.to_new_metric() {
             Ok(nb) => {
-                model.err_msg = String::new();
+                model.err = None;
                 orders.perform_cmd({
                     async move {
                         match ApiCall::Metric.post(nb).await {
@@ -218,13 +215,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     }
                 });
             }
-            Err(err_msg) => model.err_msg = err_msg.to_string(),
+            Err(err) => model.err = Some(err),
         },
         Submitted(result) => match result {
             Ok(()) => {
                 orders.send_msg(Fetch);
             }
-            Err(msg) => model.err_msg = msg.to_string(),
+            Err(err) => model.err = Some(err),
         },
     }
     log!(model);

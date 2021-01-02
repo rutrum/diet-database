@@ -1,6 +1,4 @@
-use super::get_event_value;
 use crate::api_call::ApiCall;
-use chrono::naive::{NaiveDate, NaiveTime};
 use diet_database::bowel::*;
 use seed::{prelude::*, *};
 
@@ -33,7 +31,7 @@ impl PageMsg for Msg {
 pub struct Model {
     bowels: Vec<Bowel>,
     form: Form,
-    err_msg: String,
+    err: Option<PageError>,
 }
 
 impl PageModel<Vec<Bowel>, Msg> for Model {
@@ -41,14 +39,10 @@ impl PageModel<Vec<Bowel>, Msg> for Model {
         &self.bowels
     }
 
-    fn error_msg(&self) -> &String {
-        &self.err_msg
-    }
+    fn error(&self) -> Option<&PageError> { self.err.as_ref() }
 
     fn form_fields(&self) -> Vec<Node<Msg>> {
-        nodes![
-            vec![self.form.view().map_msg(Msg::FormUpdate)],
-        ]
+        nodes![vec![self.form.view().map_msg(Msg::FormUpdate)],]
     }
 }
 
@@ -59,7 +53,7 @@ pub fn init() -> Model {
                 Input::new("Date", InputType::Date),
                 Input::new("Time", InputType::TimeOption),
                 Input::new("Scale", InputType::Range(1, 7)),
-            ]
+            ],
         },
         ..Default::default()
     }
@@ -80,11 +74,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Fetched(result) => match result {
             Ok(bowels) => model.bowels = bowels,
-            Err(msg) => model.err_msg = msg.to_string(),
+            Err(err) => model.err = Some(err),
         },
-        FormUpdate(update_msg) => {
-            model.form.update(update_msg);
-        }
+        FormUpdate(update_msg) => model.form.update(update_msg),
         Delete(idx) => {
             let b = model.bowels[idx];
             orders.perform_cmd({
@@ -100,34 +92,30 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Ok(()) => {
                 orders.send_msg(Fetch);
             }
-            Err(msg) => model.err_msg = msg.to_string(),
+            Err(err) => model.err = Some(err),
         },
-        Submit => {
-            match model.form.get_input_data() {
-                Ok(inputs) => {
-                    match NewBowel::from_input_data(inputs) {
-                        Ok(nb) => {
-                            model.err_msg = String::new();
-                            orders.perform_cmd({
-                                async move {
-                                    match ApiCall::Bowel.post(nb).await {
-                                        Ok(s) if s.status().is_ok() => Submitted(Ok(())),
-                                        _ => Submitted(Err(PageError::Submit)),
-                                    }
-                                }
-                            });
+        Submit => match model.form.get_input_data() {
+            Ok(inputs) => match NewBowel::from_input_data(inputs) {
+                Ok(nb) => {
+                    model.err = None;
+                    orders.perform_cmd({
+                        async move {
+                            match ApiCall::Bowel.post(nb).await {
+                                Ok(s) if s.status().is_ok() => Submitted(Ok(())),
+                                _ => Submitted(Err(PageError::Submit)),
+                            }
                         }
-                        Err(err_msg) => model.err_msg = err_msg.to_string(),
-                    }
+                    });
                 }
-                Err(e) => model.err_msg = e.to_string(),
-            }
+                Err(err) => model.err = Some(err),
+            },
+            Err(err) => model.err = Some(err),
         },
         Submitted(result) => match result {
             Ok(()) => {
                 orders.send_msg(Fetch);
             }
-            Err(msg) => model.err_msg = msg.to_string(),
+            Err(err) => model.err = Some(err),
         },
     }
     log!(model);

@@ -17,8 +17,8 @@ pub trait PageMsg {
 
 pub trait PageModel<T: Tabular, M: 'static + PageMsg> {
     fn data(&self) -> &T;
-    fn error_msg(&self) -> &String;
     fn form_fields(&self) -> Vec<Node<M>>;
+    fn error(&self) -> Option<&PageError>;
 
     fn view(&self) -> Node<M> {
         div![C!["page"], self.view_form(), self.view_table(),]
@@ -41,7 +41,7 @@ pub trait PageModel<T: Tabular, M: 'static + PageMsg> {
             C!["form"],
             self.form_fields(),
             submit_button(),
-            view_error_msg(&self.error_msg()),
+            view_error_msg(self.error()),
         ]
     }
 }
@@ -54,8 +54,8 @@ fn submit_button<T: 'static + PageMsg>() -> Node<T> {
     button!["Submit", ev(Ev::Click, move |_| T::submit()),]
 }
 
-fn view_error_msg<T>(msg: &String) -> Node<T> {
-    div![C!["error-msg"], msg]
+fn view_error_msg<T>(error: Option<&PageError>) -> Node<T> {
+    div![C!["error-msg"], error.map(|x| x.to_string())]
 }
 
 pub fn get_event_value(ev: web_sys::Event) -> String {
