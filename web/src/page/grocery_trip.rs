@@ -59,7 +59,7 @@ pub fn init() -> Model {
                 Input::new("Date", InputType::Date),
                 Input::new("Time", InputType::TimeOption),
                 Input::new("Store", InputType::DropDown(vec![])),
-            ]
+            ],
         },
         ..Default::default()
     }
@@ -83,7 +83,11 @@ impl FromInputData for NewGroceryTrip {
         } else {
             return Err(PageError::form("store id"));
         };
-        Ok(NewGroceryTrip { date, time, store_id })
+        Ok(NewGroceryTrip {
+            date,
+            time,
+            store_id,
+        })
     }
 }
 
@@ -114,8 +118,14 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         },
         FetchedStores(result) => match result {
             Ok(stores) => {
-                model.form.inputs[2] = Input::new("Store", InputType::DropDown(
-                    stores.into_iter().map(|store| (store.id, store.name.clone())).collect())
+                model.form.inputs[2] = Input::new(
+                    "Store",
+                    InputType::DropDown(
+                        stores
+                            .into_iter()
+                            .map(|store| (store.id, store.name.clone()))
+                            .collect(),
+                    ),
                 )
             }
             Err(err) => model.err = Some(err),
@@ -152,9 +162,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     });
                 }
                 Err(err) => model.err = Some(err),
-            }
+            },
             Err(err) => model.err = Some(err),
-        }
+        },
         Submitted(result) => match result {
             Ok(()) => {
                 orders.send_msg(Fetch);

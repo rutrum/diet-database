@@ -17,8 +17,7 @@ impl Form {
     }
 
     pub fn view(&self) -> Vec<Node<FormMsg>> {
-        self
-            .inputs
+        self.inputs
             .iter()
             .enumerate()
             .map(|(i, input)| input.view(i))
@@ -55,7 +54,9 @@ impl Input {
     }
 
     fn get_data(&self) -> Result<InputData, PageError> {
-        self.typ.to_data(&self.value).map_err(|_| PageError::form(&self.name))
+        self.typ
+            .to_data(&self.value)
+            .map_err(|_| PageError::form(&self.name))
     }
 }
 
@@ -101,12 +102,14 @@ impl InputType {
             FloatOption => Ok(InputData::FloatOption(s.parse::<f32>().ok())),
             IntOption => Ok(InputData::IntOption(s.parse::<i32>().ok())),
             Text => Ok(InputData::Text(s.to_string())),
-            DropDown(options) => if options.iter().any(|(i, _)| i.to_string() == s) {
-                s.parse::<i32>()
-                    .map(|d| InputData::Int(d))
-                    .map_err(|_| PageError::form("foreign key"))
-            } else {
-                Err(PageError::form("foreign key"))
+            DropDown(options) => {
+                if options.iter().any(|(i, _)| i.to_string() == s) {
+                    s.parse::<i32>()
+                        .map(|d| InputData::Int(d))
+                        .map_err(|_| PageError::form("foreign key"))
+                } else {
+                    Err(PageError::form("foreign key"))
+                }
             }
         }
     }
@@ -119,12 +122,13 @@ impl InputType {
             Range(min, max) => attrs!(At::Type => "range", At::Min => min, At::Max => max),
             Int | IntOption => attrs!(At::Type => "number"),
             Text | Float | FloatOption => attrs!(At::Type => "text"),
-            DropDown(options) => { attrs!() }
+            DropDown(options) => attrs!(),
         };
         if let DropDown(options) = self {
             select![
                 option![],
-                options.iter()
+                options
+                    .iter()
                     .map(|option| { option![attrs!(At::Value => option.0), &option.1] }),
                 ev(Ev::Change, move |ev| FormMsg::UpdateValue(
                     i,

@@ -57,110 +57,7 @@ impl PageModel<Vec<Metric>, Msg> for Model {
     fn form_fields(&self) -> Vec<Node<Msg>> {
         self.form.view().map_msg(Msg::FormUpdate)
     }
-
-    /*
-    fn form_fields(&self) -> Vec<Node<Msg>> {
-        nodes![
-            div![
-                label!["Date: "],
-                input![attrs!(At::Type => "Date")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Date(
-                    get_event_value(ev)
-                ))),
-            ],
-            div![
-                label!["Time: "],
-                input![attrs!(At::Type => "Time")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Time(
-                    get_event_value(ev)
-                ))),
-            ],
-            div![
-                label!["Weight: "],
-                input![attrs!(At::Type => "Text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Weight(
-                    get_event_value(ev)
-                ))),
-            ],
-            div![
-                label!["Body Fat: "],
-                input![attrs!(At::Type => "Text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::BodyFat(
-                    get_event_value(ev)
-                ))),
-            ],
-            div![
-                label!["Gut: "],
-                input![attrs!(At::Type => "Text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::GutCircum(
-                    get_event_value(ev)
-                ))),
-            ],
-            div![
-                label!["Waist: "],
-                input![attrs!(At::Type => "Text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(
-                    FormUpdateMsg::WaistCircum(get_event_value(ev))
-                )),
-            ],
-            div![
-                label!["Chest: "],
-                input![attrs!(At::Type => "Text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(
-                    FormUpdateMsg::ChestCircum(get_event_value(ev))
-                )),
-            ],
-            div![
-                label!["Thigh: "],
-                input![attrs!(At::Type => "Text")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(
-                    FormUpdateMsg::ThighCircum(get_event_value(ev))
-                )),
-            ],
-        ]
-    }
-    */
 }
-
-/*
-#[derive(Debug, Clone, Default)]
-pub struct Form {
-    date: String,
-    time: String,
-    weight: String,
-    body_fat: String,
-    gut_circum: String,
-    waist_circum: String,
-    chest_circum: String,
-    thigh_circum: String,
-}
-/*
-
-impl Form {
-    fn to_new_metric(&self) -> Result<NewMetric, PageError> {
-        let date = parse_date_input(&self.date)?;
-        let time = parse_time_input(&self.time).ok();
-        let weight = self.weight.parse::<f32>().ok();
-        let body_fat = self.body_fat.parse::<f32>().ok();
-        let gut_circum = self.gut_circum.parse::<f32>().ok();
-        let waist_circum = self.waist_circum.parse::<f32>().ok();
-        let chest_circum = self.chest_circum.parse::<f32>().ok();
-        let thigh_circum = self.thigh_circum.parse::<f32>().ok();
-
-        Ok(NewMetric {
-            date,
-            time,
-            weight,
-            body_fat,
-            gut_circum,
-            waist_circum,
-            chest_circum,
-            thigh_circum,
-        })
-    }
-}
-*/
-*/
 
 impl FromInputData for NewMetric {
     fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
@@ -205,7 +102,16 @@ impl FromInputData for NewMetric {
         } else {
             return Err(PageError::form("thigh_circum"));
         };
-        Ok(NewMetric { date, time, weight, body_fat, gut_circum, waist_circum, chest_circum, thigh_circum })
+        Ok(NewMetric {
+            date,
+            time,
+            weight,
+            body_fat,
+            gut_circum,
+            waist_circum,
+            chest_circum,
+            thigh_circum,
+        })
     }
 }
 
@@ -221,7 +127,7 @@ pub fn init() -> Model {
                 Input::new("Waist", InputType::FloatOption),
                 Input::new("Chest", InputType::FloatOption),
                 Input::new("Thigh", InputType::FloatOption),
-            ]
+            ],
         },
         ..Default::default()
     }

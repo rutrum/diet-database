@@ -51,9 +51,7 @@ impl PageModel<Vec<Store>, Msg> for Model {
 pub fn init() -> Model {
     Model {
         form: Form {
-            inputs: vec![
-                Input::new("Store name", InputType::Text),
-            ]
+            inputs: vec![Input::new("Store name", InputType::Text)],
         },
         ..Default::default()
     }
@@ -120,7 +118,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     });
                 }
                 Err(err) => model.err = Some(err),
-            }
+            },
             Err(err) => model.err = Some(err),
         },
         Submitted(result) => match result {
