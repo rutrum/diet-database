@@ -55,7 +55,7 @@ impl Input {
     }
 
     fn get_data(&self) -> Result<InputData, PageError> {
-        self.typ.to_data(&self.value)
+        self.typ.to_data(&self.value).map_err(|_| PageError::form(&self.name))
     }
 }
 
@@ -68,7 +68,9 @@ pub enum InputType {
     Int,
     Text,
     IntOption,
-    DropDown(Vec<(i32, String)>)
+    DropDown(Vec<(i32, String)>),
+    Float,
+    FloatOption,
 }
 
 impl InputType {
@@ -92,6 +94,11 @@ impl InputType {
                 .parse::<i32>()
                 .map(|d| InputData::Int(d))
                 .map_err(|_| PageError::form("integer")),
+            Float => s
+                .parse::<f32>()
+                .map(|d| InputData::Float(d))
+                .map_err(|_| PageError::form("float")),
+            FloatOption => Ok(InputData::FloatOption(s.parse::<f32>().ok())),
             IntOption => Ok(InputData::IntOption(s.parse::<i32>().ok())),
             Text => Ok(InputData::Text(s.to_string())),
             DropDown(options) => if options.iter().any(|(i, _)| i.to_string() == s) {
@@ -111,7 +118,7 @@ impl InputType {
             Time | TimeOption => attrs!(At::Type => "time"),
             Range(min, max) => attrs!(At::Type => "range", At::Min => min, At::Max => max),
             Int | IntOption => attrs!(At::Type => "number"),
-            Text => attrs!(At::Type => "text"),
+            Text | Float | FloatOption => attrs!(At::Type => "text"),
             DropDown(options) => { attrs!() }
         };
         if let DropDown(options) = self {
@@ -144,6 +151,8 @@ pub enum InputData {
     Int(i32),
     IntOption(Option<i32>),
     Text(String),
+    Float(f32),
+    FloatOption(Option<f32>),
 }
 
 pub enum FormMsg {

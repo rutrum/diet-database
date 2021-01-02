@@ -30,12 +30,6 @@ impl PageMsg for Msg {
     }
 }
 
-pub enum FormUpdateMsg {
-    Date(String),
-    Time(String),
-    StoreId(String),
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct Model {
     trips: Vec<GroceryTrip>,

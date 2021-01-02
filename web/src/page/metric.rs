@@ -4,11 +4,12 @@ use diet_database::metric::*;
 use seed::{prelude::*, *};
 
 use super::*;
+use crate::form::*;
 
 pub enum Msg {
     Fetch,
     Fetched(Result<Vec<Metric>, PageError>),
-    FormUpdate(FormUpdateMsg),
+    FormUpdate(FormMsg),
     Delete(usize),
     Deleted(Result<(), PageError>),
     Submit,
@@ -53,6 +54,11 @@ impl PageModel<Vec<Metric>, Msg> for Model {
         self.err.as_ref()
     }
 
+    fn form_fields(&self) -> Vec<Node<Msg>> {
+        self.form.view().map_msg(Msg::FormUpdate)
+    }
+
+    /*
     fn form_fields(&self) -> Vec<Node<Msg>> {
         nodes![
             div![
@@ -113,8 +119,10 @@ impl PageModel<Vec<Metric>, Msg> for Model {
             ],
         ]
     }
+    */
 }
 
+/*
 #[derive(Debug, Clone, Default)]
 pub struct Form {
     date: String,
@@ -126,6 +134,7 @@ pub struct Form {
     chest_circum: String,
     thigh_circum: String,
 }
+/*
 
 impl Form {
     fn to_new_metric(&self) -> Result<NewMetric, PageError> {
@@ -150,9 +159,70 @@ impl Form {
         })
     }
 }
+*/
+*/
+
+impl FromInputData for NewMetric {
+    fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
+        use InputData::*;
+        let date = if let Date(d) = inputs[0] {
+            d
+        } else {
+            return Err(PageError::form("date"));
+        };
+        let time = if let TimeOption(t) = inputs[1] {
+            t
+        } else {
+            return Err(PageError::form("time"));
+        };
+        let weight = if let FloatOption(i) = inputs[2] {
+            i
+        } else {
+            return Err(PageError::form("weight"));
+        };
+        let body_fat = if let FloatOption(i) = inputs[3] {
+            i
+        } else {
+            return Err(PageError::form("body_fat"));
+        };
+        let gut_circum = if let FloatOption(i) = inputs[4] {
+            i
+        } else {
+            return Err(PageError::form("gut_circum"));
+        };
+        let waist_circum = if let FloatOption(i) = inputs[5] {
+            i
+        } else {
+            return Err(PageError::form("waist_circum"));
+        };
+        let chest_circum = if let FloatOption(i) = inputs[6] {
+            i
+        } else {
+            return Err(PageError::form("chest_circum"));
+        };
+        let thigh_circum = if let FloatOption(i) = inputs[7] {
+            i
+        } else {
+            return Err(PageError::form("thigh_circum"));
+        };
+        Ok(NewMetric { date, time, weight, body_fat, gut_circum, waist_circum, chest_circum, thigh_circum })
+    }
+}
 
 pub fn init() -> Model {
     Model {
+        form: Form {
+            inputs: vec![
+                Input::new("Date", InputType::Date),
+                Input::new("Time", InputType::TimeOption),
+                Input::new("Weight", InputType::FloatOption),
+                Input::new("Body Fat", InputType::FloatOption),
+                Input::new("Gut", InputType::FloatOption),
+                Input::new("Waist", InputType::FloatOption),
+                Input::new("Chest", InputType::FloatOption),
+                Input::new("Thigh", InputType::FloatOption),
+            ]
+        },
         ..Default::default()
     }
 }
@@ -174,19 +244,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Ok(metrics) => model.metrics = metrics,
             Err(err) => model.err = Some(err),
         },
-        FormUpdate(update_msg) => {
-            use FormUpdateMsg::*;
-            match update_msg {
-                Date(s) => model.form.date = s,
-                Time(s) => model.form.time = s,
-                Weight(s) => model.form.weight = s,
-                BodyFat(s) => model.form.body_fat = s,
-                GutCircum(s) => model.form.gut_circum = s,
-                WaistCircum(s) => model.form.waist_circum = s,
-                ChestCircum(s) => model.form.chest_circum = s,
-                ThighCircum(s) => model.form.thigh_circum = s,
-            }
-        }
+        FormUpdate(update_msg) => model.form.update(update_msg),
         Delete(idx) => {
             let b = model.metrics[idx];
             orders.perform_cmd({
@@ -204,18 +262,21 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             }
             Err(err) => model.err = Some(err),
         },
-        Submit => match model.form.to_new_metric() {
-            Ok(nb) => {
-                model.err = None;
-                orders.perform_cmd({
-                    async move {
-                        match ApiCall::Metric.post(nb).await {
-                            Ok(s) if s.status().is_ok() => Submitted(Ok(())),
-                            _ => Submitted(Err(PageError::Submit)),
+        Submit => match model.form.get_input_data() {
+            Ok(inputs) => match NewMetric::from_input_data(inputs) {
+                Ok(nb) => {
+                    model.err = None;
+                    orders.perform_cmd({
+                        async move {
+                            match ApiCall::Metric.post(nb).await {
+                                Ok(s) if s.status().is_ok() => Submitted(Ok(())),
+                                _ => Submitted(Err(PageError::Submit)),
+                            }
                         }
-                    }
-                });
-            }
+                    });
+                }
+                Err(err) => model.err = Some(err),
+            },
             Err(err) => model.err = Some(err),
         },
         Submitted(result) => match result {
