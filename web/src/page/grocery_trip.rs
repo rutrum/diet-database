@@ -95,24 +95,20 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
-        Fetched(result) => match result {
-            Ok(trips) => model.trips = trips,
-            Err(err) => model.err = Some(err),
-        },
-        FetchedStores(result) => match result {
-            Ok(stores) => {
-                model.form.inputs[2] = Input::new(
-                    "Store",
-                    InputType::DropDown(
-                        stores
-                            .into_iter()
-                            .map(|store| (store.id, store.name))
-                            .collect(),
-                    ),
-                )
-            }
-            Err(err) => model.err = Some(err),
-        },
+        Fetched(Ok(trips)) => model.trips = trips,
+        Fetched(Err(err)) => model.err = Some(err),
+        FetchedStores(Ok(stores)) => {
+            model.form.inputs[2] = Input::new(
+                "Store",
+                InputType::DropDown(
+                    stores
+                        .into_iter()
+                        .map(|store| (store.id, store.name))
+                        .collect(),
+                ),
+            )
+        }
+        FetchedStores(Err(err)) => model.err = Some(err),
         FormUpdate(update_msg) => model.form.update(update_msg),
         Delete(idx) => {
             let b = model.trips[idx].clone();
@@ -125,12 +121,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
-        Deleted(result) => match result {
-            Ok(()) => {
-                orders.send_msg(Fetch);
-            }
-            Err(err) => model.err = Some(err),
-        },
+        Deleted(Ok(_)) => {
+            orders.send_msg(Fetch);
+        }
+        Deleted(Err(err)) => model.err = Some(err),
         Submit => match model.form.get_input_data() {
             Ok(inputs) => match NewGroceryTrip::from_input_data(inputs) {
                 Ok(nb) => {
@@ -148,12 +142,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             },
             Err(err) => model.err = Some(err),
         },
-        Submitted(result) => match result {
-            Ok(()) => {
-                orders.send_msg(Fetch);
-            }
-            Err(err) => model.err = Some(err),
-        },
+        Submitted(Ok(_)) => {
+            orders.send_msg(Fetch);
+        }
+        Submitted(Err(err)) => model.err = Some(err),
     }
     log!(model);
 }

@@ -1,0 +1,65 @@
+use crate::page::{get_event_value, PageError};
+use seed::{prelude::*, *};
+
+mod input_data;
+mod input_type;
+pub use input_data::*;
+pub use input_type::*;
+
+#[derive(Clone, Default, Debug)]
+pub struct Form {
+    pub inputs: Vec<Input>,
+}
+
+impl Form {
+    pub fn update(&mut self, msg: FormMsg) {
+        match msg {
+            FormMsg::UpdateValue(i, s) => {
+                self.inputs[i].set(s);
+            }
+        }
+    }
+
+    pub fn view(&self) -> Vec<Node<FormMsg>> {
+        self.inputs
+            .iter()
+            .enumerate()
+            .map(|(i, input)| input.view(i))
+            .collect()
+    }
+
+    pub fn get_input_data(&self) -> Result<Vec<InputData>, PageError> {
+        self.inputs.iter().map(|input| input.get_data()).collect() // shouldn't work?!?!?
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Input {
+    name: String,
+    value: String,
+    typ: InputType,
+}
+
+impl Input {
+    pub fn new(name: &str, typ: InputType) -> Self {
+        Self {
+            name: name.to_string(),
+            value: String::new(),
+            typ,
+        }
+    }
+
+    fn set(&mut self, value: String) {
+        self.value = value;
+    }
+
+    fn view(&self, i: usize) -> Node<FormMsg> {
+        div![label![format!("{}:", self.name)], self.typ.view(i),]
+    }
+
+    fn get_data(&self) -> Result<InputData, PageError> {
+        self.typ
+            .to_data(&self.value)
+            .map_err(|_| PageError::form(&self.name))
+    }
+}
