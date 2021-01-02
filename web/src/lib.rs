@@ -20,6 +20,7 @@ pub enum PageName {
     Bowel,
     Store,
     GroceryTrip,
+    Metric,
 }
 
 impl PageName {
@@ -29,6 +30,7 @@ impl PageName {
             Bowel => Page::Bowel(page::bowel::init()),
             Store => Page::Store(page::store::init()),
             GroceryTrip => Page::GroceryTrip(page::grocery_trip::init()),
+            Metric => Page::Metric(page::metric::init()),
         }
     }
 
@@ -38,6 +40,7 @@ impl PageName {
             Bowel => "Bowel Movements",
             Store => "Grocery Stores",
             GroceryTrip => "Grocery Trips",
+            Metric => "Body Metrics",
         }.to_string()
     }
 }
@@ -46,6 +49,7 @@ pub enum Page {
     Bowel(page::bowel::Model),
     Store(page::store::Model),
     GroceryTrip(page::grocery_trip::Model),
+    Metric(page::metric::Model),
 }
 
 pub enum Msg {
@@ -53,6 +57,7 @@ pub enum Msg {
     BowelPageUpdate(page::bowel::Msg),
     StorePageUpdate(page::store::Msg),
     GroceryTripPageUpdate(page::grocery_trip::Msg),
+    MetricPageUpdate(page::metric::Msg),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -62,6 +67,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Page::Bowel(_) => orders.send_msg(Msg::BowelPageUpdate(page::bowel::Msg::load())),
                 Page::Store(_) => orders.send_msg(Msg::StorePageUpdate(page::store::Msg::load())),
                 Page::GroceryTrip(_) => orders.send_msg(Msg::GroceryTripPageUpdate(page::grocery_trip::Msg::load())),
+                Page::Metric(_) => orders.send_msg(Msg::MetricPageUpdate(page::metric::Msg::load())),
             };
             model.page = page;
         }
@@ -80,6 +86,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 page::grocery_trip::update(msg, model, &mut orders.proxy(Msg::GroceryTripPageUpdate));
             }
         }
+        Msg::MetricPageUpdate(msg) => {
+            if let Page::Metric(model) = &mut model.page {
+                page::metric::update(msg, model, &mut orders.proxy(Msg::MetricPageUpdate));
+            }
+        }
     }
 }
 
@@ -92,11 +103,14 @@ fn view_page(model: &Model) -> Node<Msg> {
         Page::Bowel(model) => model.view().map_msg(Msg::BowelPageUpdate),
         Page::Store(model) => model.view().map_msg(Msg::StorePageUpdate),
         Page::GroceryTrip(model) => model.view().map_msg(Msg::GroceryTripPageUpdate),
+        Page::Metric(model) => model.view().map_msg(Msg::MetricPageUpdate),
     }
 }
 
 fn view_page_selector(_model: &Model) -> Node<Msg> {
-    let page_names = vec![PageName::Bowel, PageName::Store, PageName::GroceryTrip];
+    let page_names = vec![PageName::Bowel, PageName::Store, PageName::GroceryTrip,
+        PageName::Metric,
+    ];
     nav![
         C!["page-selector"],
         page_names.into_iter().map(|page_name| {

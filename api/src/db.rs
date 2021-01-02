@@ -11,6 +11,26 @@ pub fn create_connection() -> MysqlConnection {
         .unwrap_or_else(|_| panic!("Cannot connect to database at {}", database_url))
 }
 
+pub mod metric {
+    use super::*;
+    use diet_database::metric::*;
+
+    pub fn insert(conn: &MysqlConnection, metric: NewMetric) -> Result<usize> {
+        diesel::insert_into(schema::metric::table)
+            .values(&metric)
+            .execute(conn)
+    }
+
+    pub fn select_all(conn: &MysqlConnection) -> Result<Vec<Metric>> {
+        schema::metric::table.load::<Metric>(conn)
+    }
+
+    pub fn delete(conn: &MysqlConnection, del_metric: Metric) -> Result<usize> {
+        use schema::metric::dsl::*;
+        diesel::delete(metric.filter(id.eq(del_metric.id))).execute(conn)
+    }
+}
+
 pub mod bowel {
     use super::*;
     use diet_database::bowel::*;

@@ -3,16 +3,16 @@ use crate::api_call::ApiCall;
 use diet_database::store::*;
 use seed::{prelude::*, *};
 
-use super::{PageMsg, PageModel};
+use super::*;
 
 pub enum Msg {
     Fetch,
-    Fetched(Result<Vec<Store>, String>),
+    Fetched(Result<Vec<Store>, PageError>),
     FormUpdate(FormUpdateMsg),
     Delete(usize),
-    Deleted(Result<(), String>),
+    Deleted(Result<(), PageError>),
     Submit,
-    Submitted(Result<(), String>),
+    Submitted(Result<(), PageError>),
 }
 
 impl PageMsg for Msg {
@@ -67,9 +67,9 @@ pub struct Form {
 }
 
 impl Form {
-    fn to_new_store(&self) -> Result<NewStore, &'static str> {
+    fn to_new_store(&self) -> Result<NewStore, PageError> {
         if self.name.is_empty() {
-            Err("Name is required")
+            Err(PageError::form("name"))
         } else {
             Ok(NewStore {
                 name: self.name.clone(),
@@ -96,7 +96,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Fetched(result) => match result {
             Ok(stores) => model.stores = stores,
-            Err(msg) => model.err_msg = msg,
+            Err(msg) => model.err_msg = msg.to_string(),
         },
         FormUpdate(update_msg) => {
             use FormUpdateMsg::*;
@@ -111,7 +111,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 async move {
                     match ApiCall::Store.delete(s).await {
                         Ok(s) if s.status().is_ok() => Deleted(Ok(())),
-                        _ => Deleted(Err("Error deleting on server".to_string())),
+                        _ => Deleted(Err(PageError::Delete)),
                     }
                 }
             });
@@ -120,7 +120,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Ok(()) => {
                 orders.send_msg(Fetch);
             }
-            Err(msg) => model.err_msg = msg,
+            Err(msg) => model.err_msg = msg.to_string(),
         },
         Submit => match model.form.to_new_store() {
             Ok(nb) => {
@@ -129,7 +129,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     async move {
                         match ApiCall::Store.post(nb).await {
                             Ok(s) if s.status().is_ok() => Submitted(Ok(())),
-                            _ => Submitted(Err("Error submitting to server".to_string())),
+                            _ => Submitted(Err(PageError::Submit)),
                         }
                     }
                 });
@@ -140,7 +140,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Ok(()) => {
                 orders.send_msg(Fetch);
             }
-            Err(msg) => model.err_msg = msg,
+            Err(msg) => model.err_msg = msg.to_string(),
         },
     }
     log!(model);

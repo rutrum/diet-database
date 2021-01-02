@@ -8,12 +8,12 @@ use super::*;
 
 pub enum Msg {
     Fetch,
-    Fetched(Result<Vec<Bowel>, String>),
+    Fetched(Result<Vec<Bowel>, PageError>),
     FormUpdate(FormUpdateMsg),
     Delete(usize),
-    Deleted(Result<(), String>),
+    Deleted(Result<(), PageError>),
     Submit,
-    Submitted(Result<(), String>),
+    Submitted(Result<(), PageError>),
 }
 
 impl PageMsg for Msg {
@@ -85,14 +85,10 @@ pub struct Form {
 }
 
 impl Form {
-    fn to_new_bowel(&self) -> Result<NewBowel, &'static str> {
-        let date =
-            NaiveDate::parse_from_str(&self.date, "%Y-%m-%d").map_err(|_| "Wrong date format")?;
-        let time = NaiveTime::parse_from_str(self.time.as_str(), "%H:%M").ok();
-        let scale = self
-            .scale
-            .parse::<i8>()
-            .map_err(|_| "Scale is not an 8 bit integer")?;
+    fn to_new_bowel(&self) -> Result<NewBowel, PageError> {
+        let date = parse_date_input(&self.date)?;
+        let time = parse_time_input(&self.time).ok();
+        let scale = self.scale.parse::<i8>().map_err(|_| PageError::form("scale"))?;
 
         Ok(NewBowel { date, time, scale })
     }
@@ -114,14 +110,16 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Fetch => {
             orders.perform_cmd({
                 async move {
-                    let bowels = ApiCall::Bowel.get().await.unwrap_or_default();
-                    Msg::Fetched(Ok(bowels))
+                    match ApiCall::Bowel.get().await {
+                        Ok(s) => Fetched(Ok(s)),
+                        Err(_) => Fetched(Err(PageError::Load)),
+                    }
                 }
             });
         }
         Fetched(result) => match result {
             Ok(bowels) => model.bowels = bowels,
-            Err(msg) => model.err_msg = msg,
+            Err(msg) => model.err_msg = msg.to_string(),
         },
         FormUpdate(update_msg) => {
             use FormUpdateMsg::*;
@@ -137,7 +135,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 async move {
                     match ApiCall::Bowel.delete(b).await {
                         Ok(s) if s.status().is_ok() => Deleted(Ok(())),
-                        _ => Deleted(Err("Error deleting on server".to_string())),
+                        _ => Deleted(Err(PageError::Delete)),
                     }
                 }
             });
@@ -146,7 +144,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Ok(()) => {
                 orders.send_msg(Fetch);
             }
-            Err(msg) => model.err_msg = msg,
+            Err(msg) => model.err_msg = msg.to_string(),
         },
         Submit => match model.form.to_new_bowel() {
             Ok(nb) => {
@@ -155,7 +153,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     async move {
                         match ApiCall::Bowel.post(nb).await {
                             Ok(s) if s.status().is_ok() => Submitted(Ok(())),
-                            _ => Submitted(Err("Error submitting to server".to_string())),
+                            _ => Submitted(Err(PageError::Submit)),
                         }
                     }
                 });
@@ -166,7 +164,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Ok(()) => {
                 orders.send_msg(Fetch);
             }
-            Err(msg) => model.err_msg = msg,
+            Err(msg) => model.err_msg = msg.to_string(),
         },
     }
     log!(model);

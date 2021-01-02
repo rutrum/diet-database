@@ -11,6 +11,7 @@ pub enum ApiCall {
     Bowel,
     Store,
     GroceryTrip,
+    Metric,
 }
 
 impl ApiCall {
@@ -38,6 +39,7 @@ impl ApiCall {
             .await
     }
 }
+
 /*
 pub mod bowel {
     use super::*;

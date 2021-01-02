@@ -1,16 +1,14 @@
 use super::get_event_value;
 use crate::api_call::ApiCall;
 use chrono::naive::{NaiveDate, NaiveTime};
-use diet_database::grocery_trip::*;
-use diet_database::store::Store;
+use diet_database::metric::*;
 use seed::{prelude::*, *};
 
 use super::*;
 
 pub enum Msg {
     Fetch,
-    Fetched(Result<Vec<GroceryTrip>, PageError>),
-    FetchedStores(Result<Vec<Store>, PageError>),
+    Fetched(Result<Vec<Metric>, PageError>),
     FormUpdate(FormUpdateMsg),
     Delete(usize),
     Deleted(Result<(), PageError>),
@@ -33,20 +31,24 @@ impl PageMsg for Msg {
 pub enum FormUpdateMsg {
     Date(String),
     Time(String),
-    StoreId(String),
+    Weight(String),
+    BodyFat(String),
+    GutCircum(String),
+    WaistCircum(String),
+    ChestCircum(String),
+    ThighCircum(String),
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct Model {
-    trips: Vec<GroceryTrip>,
-    stores: Vec<Store>,
+    metrics: Vec<Metric>,
     form: Form,
     err_msg: String,
 }
 
-impl PageModel<Vec<GroceryTrip>> for Model {
-    fn data(&self) -> &Vec<GroceryTrip> {
-        &self.trips
+impl PageModel<Vec<Metric>> for Model {
+    fn data(&self) -> &Vec<Metric> {
+        &self.metrics
     }
 
     fn error_msg(&self) -> &String {
@@ -70,16 +72,46 @@ impl PageModel<Vec<GroceryTrip>> for Model {
                 ))),
             ],
             div![
-                label!["Store: "],
-                select![
-                    option![],
-                    self.stores.iter().map(|store| {
-                        option![ attrs!(At::Value => store.id), &store.name ]
-                    }),
-                    ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::StoreId(
-                        get_event_value(ev)
-                    ))),
-                ]
+                label!["Weight: "],
+                input![attrs!(At::Type => "Text")],
+                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Weight(
+                    get_event_value(ev)
+                ))),
+            ],
+            div![
+                label!["Body Fat: "],
+                input![attrs!(At::Type => "Text")],
+                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::BodyFat(
+                    get_event_value(ev)
+                ))),
+            ],
+            div![
+                label!["Gut: "],
+                input![attrs!(At::Type => "Text")],
+                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::GutCircum(
+                    get_event_value(ev)
+                ))),
+            ],
+            div![
+                label!["Waist: "],
+                input![attrs!(At::Type => "Text")],
+                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::WaistCircum(
+                    get_event_value(ev)
+                ))),
+            ],
+            div![
+                label!["Chest: "],
+                input![attrs!(At::Type => "Text")],
+                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::ChestCircum(
+                    get_event_value(ev)
+                ))),
+            ],
+            div![
+                label!["Thigh: "],
+                input![attrs!(At::Type => "Text")],
+                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::ThighCircum(
+                    get_event_value(ev)
+                ))),
             ],
         ]
     }
@@ -89,16 +121,26 @@ impl PageModel<Vec<GroceryTrip>> for Model {
 pub struct Form {
     date: String,
     time: String,
-    store_id: String,
+    weight: String,
+    body_fat: String,
+    gut_circum: String,
+    waist_circum: String,
+    chest_circum: String,
+    thigh_circum: String,
 }
 
 impl Form {
-    fn to_new_grocery_trip(&self) -> Result<NewGroceryTrip, PageError> {
+    fn to_new_metric(&self) -> Result<NewMetric, PageError> {
         let date = parse_date_input(&self.date)?;
         let time = parse_time_input(&self.time).ok();
-        let store_id = self.store_id.parse::<i32>().map_err(|_| PageError::form("store id"))?;
+        let weight = self.weight.parse::<f32>().ok();
+        let body_fat = self.body_fat.parse::<f32>().ok();
+        let gut_circum = self.gut_circum.parse::<f32>().ok();
+        let waist_circum = self.waist_circum.parse::<f32>().ok();
+        let chest_circum = self.chest_circum.parse::<f32>().ok();
+        let thigh_circum = self.thigh_circum.parse::<f32>().ok();
 
-        Ok(NewGroceryTrip { date, time, store_id })
+        Ok(NewMetric { date, time, weight, body_fat, gut_circum, waist_circum, chest_circum, thigh_circum })
     }
 }
 
@@ -114,27 +156,15 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Fetch => {
             orders.perform_cmd({
                 async move {
-                    match ApiCall::GroceryTrip.get().await {
+                    match ApiCall::Metric.get().await {
                         Ok(s) => Fetched(Ok(s)),
                         Err(_) => Fetched(Err(PageError::Load)),
                     }
                 }
             });
-            orders.perform_cmd({
-                async move {
-                    match ApiCall::Store.get().await {
-                        Ok(s) => FetchedStores(Ok(s)),
-                        Err(_) => FetchedStores(Err(PageError::Load)),
-                    }
-                }
-            });
         }
         Fetched(result) => match result {
-            Ok(trips) => model.trips = trips,
-            Err(msg) => model.err_msg = msg.to_string(),
-        },
-        FetchedStores(result) => match result {
-            Ok(stores) => model.stores = stores,
+            Ok(metrics) => model.metrics = metrics,
             Err(msg) => model.err_msg = msg.to_string(),
         },
         FormUpdate(update_msg) => {
@@ -142,14 +172,19 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             match update_msg {
                 Date(s) => model.form.date = s,
                 Time(s) => model.form.time = s,
-                StoreId(s) => model.form.store_id = s,
+                Weight(s) => model.form.weight = s,
+                BodyFat(s) => model.form.body_fat = s,
+                GutCircum(s) => model.form.gut_circum = s,
+                WaistCircum(s) => model.form.waist_circum = s,
+                ChestCircum(s) => model.form.chest_circum = s,
+                ThighCircum(s) => model.form.thigh_circum = s,
             }
         }
         Delete(idx) => {
-            let b = model.trips[idx].clone();
+            let b = model.metrics[idx];
             orders.perform_cmd({
                 async move {
-                    match ApiCall::GroceryTrip.delete(b).await {
+                    match ApiCall::Metric.delete(b).await {
                         Ok(s) if s.status().is_ok() => Deleted(Ok(())),
                         _ => Deleted(Err(PageError::Delete)),
                     }
@@ -162,12 +197,12 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             }
             Err(msg) => model.err_msg = msg.to_string(),
         },
-        Submit => match model.form.to_new_grocery_trip() {
+        Submit => match model.form.to_new_metric() {
             Ok(nb) => {
                 model.err_msg = String::new();
                 orders.perform_cmd({
                     async move {
-                        match ApiCall::GroceryTrip.post(nb).await {
+                        match ApiCall::Metric.post(nb).await {
                             Ok(s) if s.status().is_ok() => Submitted(Ok(())),
                             _ => Submitted(Err(PageError::Submit)),
                         }

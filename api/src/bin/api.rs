@@ -12,6 +12,38 @@ use rocket_cors::{AllowedOrigins, Error};
 
 use api::db;
 
+mod metric {
+    use super::*;
+    use diet_database::metric::*;
+
+    #[get("/metric")]
+    pub fn get_all() -> Json<Vec<Metric>> {
+        let conn = db::create_connection();
+        let bowels = db::metric::select_all(&conn).unwrap_or_default();
+        Json(bowels)
+    }
+
+    #[post("/metric", data = "<bowel>")]
+    pub fn add(bowel: Json<NewMetric>) -> Status {
+        let bowel = bowel.into_inner();
+        let conn = db::create_connection();
+        match db::metric::insert(&conn, bowel) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+
+    #[delete("/metric", data = "<bowel>")]
+    pub fn delete(bowel: Json<Metric>) -> Status {
+        let bowel = bowel.into_inner();
+        let conn = db::create_connection();
+        match db::metric::delete(&conn, bowel) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+}
+
 mod bowel {
     use super::*;
     use diet_database::bowel::*;
@@ -128,6 +160,9 @@ fn main() -> Result<(), Error> {
                 grocery_trip::get_all,
                 grocery_trip::add,
                 grocery_trip::delete,
+                metric::get_all,
+                metric::add,
+                metric::delete,
             ],
         )
         .attach(cors)
