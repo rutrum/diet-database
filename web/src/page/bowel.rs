@@ -39,10 +39,12 @@ impl PageModel<Vec<Bowel>, Msg> for Model {
         &self.bowels
     }
 
-    fn error(&self) -> Option<&PageError> { self.err.as_ref() }
+    fn error(&self) -> Option<&PageError> {
+        self.err.as_ref()
+    }
 
     fn form_fields(&self) -> Vec<Node<Msg>> {
-        nodes![vec![self.form.view().map_msg(Msg::FormUpdate)],]
+        self.form.view().map_msg(Msg::FormUpdate)
     }
 }
 
@@ -56,6 +58,28 @@ pub fn init() -> Model {
             ],
         },
         ..Default::default()
+    }
+}
+
+impl FromInputData for NewBowel {
+    fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
+        use InputData::*;
+        let date = if let Date(d) = inputs[0] {
+            d
+        } else {
+            return Err(PageError::form("date"));
+        };
+        let time = if let TimeOption(t) = inputs[1] {
+            t
+        } else {
+            return Err(PageError::form("time"));
+        };
+        let scale = if let Byte(b) = inputs[2] {
+            b
+        } else {
+            return Err(PageError::form("scale"));
+        };
+        Ok(NewBowel { date, time, scale })
     }
 }
 

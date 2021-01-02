@@ -4,11 +4,12 @@ use diet_database::store::*;
 use seed::{prelude::*, *};
 
 use super::*;
+use crate::form::*;
 
 pub enum Msg {
     Fetch,
     Fetched(Result<Vec<Store>, PageError>),
-    FormUpdate(FormUpdateMsg),
+    FormUpdate(FormMsg),
     Delete(usize),
     Deleted(Result<(), PageError>),
     Submit,
@@ -27,53 +28,47 @@ impl PageMsg for Msg {
     }
 }
 
-pub enum FormUpdateMsg {
-    Name(String),
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct Model {
     stores: Vec<Store>,
     form: Form,
-    err: Option<PageError>
+    err: Option<PageError>,
 }
 
 impl PageModel<Vec<Store>, Msg> for Model {
     fn data(&self) -> &Vec<Store> {
         &self.stores
     }
-    fn error(&self) -> Option<&PageError> { self.err.as_ref() }
+    fn error(&self) -> Option<&PageError> {
+        self.err.as_ref()
+    }
 
     fn form_fields(&self) -> Vec<Node<Msg>> {
-        nodes![div![
-            label!["Name of store:"],
-            input![attrs!(At::Type => "text")],
-            ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Name(
-                get_event_value(ev)
-            ))),
-        ],]
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct Form {
-    name: String,
-}
-
-impl Form {
-    fn to_new_store(&self) -> Result<NewStore, PageError> {
-        if self.name.is_empty() {
-            Err(PageError::form("name"))
-        } else {
-            Ok(NewStore {
-                name: self.name.clone(),
-            })
-        }
+        self.form.view().map_msg(Msg::FormUpdate)
     }
 }
 
 pub fn init() -> Model {
-    Default::default()
+    Model {
+        form: Form {
+            inputs: vec![
+                Input::new("Store name", InputType::Text),
+            ]
+        },
+        ..Default::default()
+    }
+}
+
+impl FromInputData for NewStore {
+    fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
+        use InputData::*;
+        let name = if let Text(s) = &inputs[0] {
+            s.to_string()
+        } else {
+            return Err(PageError::form("name"));
+        };
+        Ok(Self { name })
+    }
 }
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -92,12 +87,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Ok(stores) => model.stores = stores,
             Err(err) => model.err = Some(err),
         },
-        FormUpdate(update_msg) => {
-            use FormUpdateMsg::*;
-            match update_msg {
-                Name(s) => model.form.name = s,
-            }
-        }
+        FormUpdate(update_msg) => model.form.update(update_msg),
         Delete(idx) => {
             log!("deleting store");
             let s = model.stores[idx].clone();
@@ -116,17 +106,20 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             }
             Err(err) => model.err = Some(err),
         },
-        Submit => match model.form.to_new_store() {
-            Ok(nb) => {
-                model.err = None;
-                orders.perform_cmd({
-                    async move {
-                        match ApiCall::Store.post(nb).await {
-                            Ok(s) if s.status().is_ok() => Submitted(Ok(())),
-                            _ => Submitted(Err(PageError::Submit)),
+        Submit => match model.form.get_input_data() {
+            Ok(inputs) => match NewStore::from_input_data(inputs) {
+                Ok(nb) => {
+                    model.err = None;
+                    orders.perform_cmd({
+                        async move {
+                            match ApiCall::Store.post(nb).await {
+                                Ok(s) if s.status().is_ok() => Submitted(Ok(())),
+                                _ => Submitted(Err(PageError::Submit)),
+                            }
                         }
-                    }
-                });
+                    });
+                }
+                Err(err) => model.err = Some(err),
             }
             Err(err) => model.err = Some(err),
         },

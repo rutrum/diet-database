@@ -1,17 +1,17 @@
 use super::get_event_value;
 use crate::api_call::ApiCall;
-use chrono::naive::{NaiveDate, NaiveTime};
 use diet_database::grocery_trip::*;
 use diet_database::store::Store;
 use seed::{prelude::*, *};
 
 use super::*;
+use crate::form::*;
 
 pub enum Msg {
     Fetch,
     Fetched(Result<Vec<GroceryTrip>, PageError>),
     FetchedStores(Result<Vec<Store>, PageError>),
-    FormUpdate(FormUpdateMsg),
+    FormUpdate(FormMsg),
     Delete(usize),
     Deleted(Result<(), PageError>),
     Submit,
@@ -49,67 +49,47 @@ impl PageModel<Vec<GroceryTrip>, Msg> for Model {
         &self.trips
     }
 
-    fn error(&self) -> Option<&PageError> { self.err.as_ref() }
+    fn error(&self) -> Option<&PageError> {
+        self.err.as_ref()
+    }
 
     fn form_fields(&self) -> Vec<Node<Msg>> {
-        nodes![
-            div![
-                label!["Date: "],
-                input![attrs!(At::Type => "Date")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Date(
-                    get_event_value(ev)
-                ))),
-            ],
-            div![
-                label!["Time: "],
-                input![attrs!(At::Type => "Time")],
-                ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::Time(
-                    get_event_value(ev)
-                ))),
-            ],
-            div![
-                label!["Store: "],
-                select![
-                    option![],
-                    self.stores
-                        .iter()
-                        .map(|store| { option![attrs!(At::Value => store.id), &store.name] }),
-                    ev(Ev::Change, |ev| Msg::FormUpdate(FormUpdateMsg::StoreId(
-                        get_event_value(ev)
-                    ))),
-                ]
-            ],
-        ]
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct Form {
-    date: String,
-    time: String,
-    store_id: String,
-}
-
-impl Form {
-    fn to_new_grocery_trip(&self) -> Result<NewGroceryTrip, PageError> {
-        let date = parse_date_input(&self.date)?;
-        let time = parse_time_input(&self.time).ok();
-        let store_id = self
-            .store_id
-            .parse::<i32>()
-            .map_err(|_| PageError::form("store id"))?;
-
-        Ok(NewGroceryTrip {
-            date,
-            time,
-            store_id,
-        })
+        self.form.view().map_msg(Msg::FormUpdate)
     }
 }
 
 pub fn init() -> Model {
     Model {
+        form: Form {
+            inputs: vec![
+                Input::new("Date", InputType::Date),
+                Input::new("Time", InputType::TimeOption),
+                Input::new("Store", InputType::DropDown(vec![])),
+            ]
+        },
         ..Default::default()
+    }
+}
+
+impl FromInputData for NewGroceryTrip {
+    fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
+        use InputData::*;
+        let date = if let Date(d) = inputs[0] {
+            d
+        } else {
+            return Err(PageError::form("date"));
+        };
+        let time = if let TimeOption(t) = inputs[1] {
+            t
+        } else {
+            return Err(PageError::form("time"));
+        };
+        let store_id = if let Int(i) = inputs[2] {
+            i
+        } else {
+            return Err(PageError::form("store id"));
+        };
+        Ok(NewGroceryTrip { date, time, store_id })
     }
 }
 
@@ -139,17 +119,14 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Err(err) => model.err = Some(err),
         },
         FetchedStores(result) => match result {
-            Ok(stores) => model.stores = stores,
+            Ok(stores) => {
+                model.form.inputs[2] = Input::new("Store", InputType::DropDown(
+                    stores.into_iter().map(|store| (store.id, store.name.clone())).collect())
+                )
+            }
             Err(err) => model.err = Some(err),
         },
-        FormUpdate(update_msg) => {
-            use FormUpdateMsg::*;
-            match update_msg {
-                Date(s) => model.form.date = s,
-                Time(s) => model.form.time = s,
-                StoreId(s) => model.form.store_id = s,
-            }
-        }
+        FormUpdate(update_msg) => model.form.update(update_msg),
         Delete(idx) => {
             let b = model.trips[idx].clone();
             orders.perform_cmd({
@@ -167,20 +144,23 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             }
             Err(err) => model.err = Some(err),
         },
-        Submit => match model.form.to_new_grocery_trip() {
-            Ok(nb) => {
-                model.err = None;
-                orders.perform_cmd({
-                    async move {
-                        match ApiCall::GroceryTrip.post(nb).await {
-                            Ok(s) if s.status().is_ok() => Submitted(Ok(())),
-                            _ => Submitted(Err(PageError::Submit)),
+        Submit => match model.form.get_input_data() {
+            Ok(inputs) => match NewGroceryTrip::from_input_data(inputs) {
+                Ok(nb) => {
+                    model.err = None;
+                    orders.perform_cmd({
+                        async move {
+                            match ApiCall::GroceryTrip.post(nb).await {
+                                Ok(s) if s.status().is_ok() => Submitted(Ok(())),
+                                _ => Submitted(Err(PageError::Submit)),
+                            }
                         }
-                    }
-                });
+                    });
+                }
+                Err(err) => model.err = Some(err),
             }
             Err(err) => model.err = Some(err),
-        },
+        }
         Submitted(result) => match result {
             Ok(()) => {
                 orders.send_msg(Fetch);

@@ -1,6 +1,5 @@
 use super::get_event_value;
 use crate::api_call::ApiCall;
-use chrono::naive::{NaiveDate, NaiveTime};
 use diet_database::metric::*;
 use seed::{prelude::*, *};
 
@@ -43,14 +42,16 @@ pub enum FormUpdateMsg {
 pub struct Model {
     metrics: Vec<Metric>,
     form: Form,
-    err: Option<PageError>
+    err: Option<PageError>,
 }
 
 impl PageModel<Vec<Metric>, Msg> for Model {
     fn data(&self) -> &Vec<Metric> {
         &self.metrics
     }
-    fn error(&self) -> Option<&PageError> { self.err.as_ref() }
+    fn error(&self) -> Option<&PageError> {
+        self.err.as_ref()
+    }
 
     fn form_fields(&self) -> Vec<Node<Msg>> {
         nodes![

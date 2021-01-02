@@ -16,12 +16,13 @@ impl Form {
         }
     }
 
-    pub fn view(&self) -> Node<FormMsg> {
-        div![self
+    pub fn view(&self) -> Vec<Node<FormMsg>> {
+        self
             .inputs
             .iter()
             .enumerate()
-            .map(|(i, input)| input.view(i))]
+            .map(|(i, input)| input.view(i))
+            .collect()
     }
 
     pub fn get_input_data(&self) -> Result<Vec<InputData>, PageError> {
@@ -50,7 +51,7 @@ impl Input {
     }
 
     fn view(&self, i: usize) -> Node<FormMsg> {
-        div![label![&self.name], self.typ.view(i),]
+        div![label![format!("{}:", self.name)], self.typ.view(i),]
     }
 
     fn get_data(&self) -> Result<InputData, PageError> {
@@ -58,14 +59,16 @@ impl Input {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum InputType {
     Date,
     Time,
     TimeOption,
     Range(usize, usize),
     Int,
+    Text,
     IntOption,
+    DropDown(Vec<(i32, String)>)
 }
 
 impl InputType {
@@ -88,8 +91,16 @@ impl InputType {
             Int => s
                 .parse::<i32>()
                 .map(|d| InputData::Int(d))
-                .map_err(|_| PageError::form("date")),
+                .map_err(|_| PageError::form("integer")),
             IntOption => Ok(InputData::IntOption(s.parse::<i32>().ok())),
+            Text => Ok(InputData::Text(s.to_string())),
+            DropDown(options) => if options.iter().any(|(i, _)| i.to_string() == s) {
+                s.parse::<i32>()
+                    .map(|d| InputData::Int(d))
+                    .map_err(|_| PageError::form("foreign key"))
+            } else {
+                Err(PageError::form("foreign key"))
+            }
         }
     }
 
@@ -100,14 +111,28 @@ impl InputType {
             Time | TimeOption => attrs!(At::Type => "time"),
             Range(min, max) => attrs!(At::Type => "range", At::Min => min, At::Max => max),
             Int | IntOption => attrs!(At::Type => "number"),
+            Text => attrs!(At::Type => "text"),
+            DropDown(options) => { attrs!() }
         };
-        input![
-            attrs,
-            ev(Ev::Change, move |ev| FormMsg::UpdateValue(
-                i,
-                get_event_value(ev)
-            )),
-        ]
+        if let DropDown(options) = self {
+            select![
+                option![],
+                options.iter()
+                    .map(|option| { option![attrs!(At::Value => option.0), &option.1] }),
+                ev(Ev::Change, move |ev| FormMsg::UpdateValue(
+                    i,
+                    get_event_value(ev)
+                )),
+            ]
+        } else {
+            input![
+                attrs,
+                ev(Ev::Change, move |ev| FormMsg::UpdateValue(
+                    i,
+                    get_event_value(ev)
+                )),
+            ]
+        }
     }
 }
 
@@ -118,6 +143,7 @@ pub enum InputData {
     Byte(i8),
     Int(i32),
     IntOption(Option<i32>),
+    Text(String),
 }
 
 pub enum FormMsg {
@@ -128,36 +154,4 @@ pub trait FromInputData {
     fn from_input_data(_: Vec<InputData>) -> Result<Self, PageError>
     where
         Self: Sized;
-}
-
-use diet_database::bowel::NewBowel;
-impl FromInputData for NewBowel {
-    fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
-        use InputData::*;
-        let date = if let Date(d) = inputs[0] {
-            d
-        } else {
-            return Err(PageError::form("date"));
-        };
-        let time = if let TimeOption(t) = inputs[1] {
-            t
-        } else {
-            return Err(PageError::form("time"));
-        };
-        let scale = if let Byte(b) = inputs[2] {
-            b
-        } else {
-            return Err(PageError::form("scale"));
-        };
-        Ok(NewBowel { date, time, scale })
-    }
-    /*
-    fn to_new_bowel(&self) -> Result<NewBowel, PageError> {
-        let date = parse_date_input(&self.date)?;
-        let time = parse_time_input(&self.time).ok();
-        let scale = self.scale.parse::<i8>().map_err(|_| PageError::form("scale"))?;
-
-        Ok(NewBowel { date, time, scale })
-    }
-    */
 }
