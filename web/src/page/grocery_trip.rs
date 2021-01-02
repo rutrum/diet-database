@@ -67,26 +67,10 @@ pub fn init() -> Model {
 
 impl FromInputData for NewGroceryTrip {
     fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
-        use InputData::*;
-        let date = if let Date(d) = inputs[0] {
-            d
-        } else {
-            return Err(PageError::form("date"));
-        };
-        let time = if let TimeOption(t) = inputs[1] {
-            t
-        } else {
-            return Err(PageError::form("time"));
-        };
-        let store_id = if let Int(i) = inputs[2] {
-            i
-        } else {
-            return Err(PageError::form("store id"));
-        };
         Ok(NewGroceryTrip {
-            date,
-            time,
-            store_id,
+            date: inputs[0].try_date()?,
+            time: inputs[1].try_time_option()?,
+            store_id: inputs[2].try_int()?,
         })
     }
 }

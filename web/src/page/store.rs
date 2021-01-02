@@ -59,13 +59,9 @@ pub fn init() -> Model {
 
 impl FromInputData for NewStore {
     fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
-        use InputData::*;
-        let name = if let Text(s) = &inputs[0] {
-            s.to_string()
-        } else {
-            return Err(PageError::form("name"));
-        };
-        Ok(Self { name })
+        Ok(Self { 
+            name: inputs[0].try_text()?,
+        })
     }
 }
 

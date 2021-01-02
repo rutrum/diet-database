@@ -63,23 +63,11 @@ pub fn init() -> Model {
 
 impl FromInputData for NewBowel {
     fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
-        use InputData::*;
-        let date = if let Date(d) = inputs[0] {
-            d
-        } else {
-            return Err(PageError::form("date"));
-        };
-        let time = if let TimeOption(t) = inputs[1] {
-            t
-        } else {
-            return Err(PageError::form("time"));
-        };
-        let scale = if let Byte(b) = inputs[2] {
-            b
-        } else {
-            return Err(PageError::form("scale"));
-        };
-        Ok(NewBowel { date, time, scale })
+        Ok(NewBowel { 
+            date: inputs[0].try_date()?, 
+            time: inputs[1].try_time_option()?, 
+            scale: inputs[2].try_byte()?, 
+        })
     }
 }
 

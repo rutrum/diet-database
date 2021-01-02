@@ -80,6 +80,7 @@ pub enum PageError {
     Delete,
     Load,
     Form(String),
+    Developer,
 }
 
 impl PageError {
@@ -98,6 +99,7 @@ impl Display for PageError {
             Delete => "Unable to delete item".to_string(),
             Load => "Cannot retrieve data".to_string(),
             Form(s) => format!("Field {} is invalid", s),
+            Developer => format!("The developer made a mistake!"),
         };
         write!(f, "{}", s)
     }
