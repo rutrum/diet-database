@@ -1,4 +1,3 @@
-use super::get_event_value;
 use crate::api_call::ApiCall;
 use diet_database::grocery_trip::*;
 use diet_database::store::Store;
@@ -107,7 +106,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     InputType::DropDown(
                         stores
                             .into_iter()
-                            .map(|store| (store.id, store.name.clone()))
+                            .map(|store| (store.id, store.name))
                             .collect(),
                     ),
                 )

@@ -1,4 +1,3 @@
-use super::get_event_value;
 use crate::api_call::ApiCall;
 use diet_database::store::*;
 use seed::{prelude::*, *};
@@ -59,7 +58,7 @@ pub fn init() -> Model {
 
 impl FromInputData for NewStore {
     fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
-        Ok(Self { 
+        Ok(Self {
             name: inputs[0].try_text()?,
         })
     }

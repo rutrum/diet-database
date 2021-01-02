@@ -1,4 +1,3 @@
-use super::get_event_value;
 use crate::api_call::ApiCall;
 use diet_database::metric::*;
 use seed::{prelude::*, *};
@@ -28,17 +27,6 @@ impl PageMsg for Msg {
     }
 }
 
-pub enum FormUpdateMsg {
-    Date(String),
-    Time(String),
-    Weight(String),
-    BodyFat(String),
-    GutCircum(String),
-    WaistCircum(String),
-    ChestCircum(String),
-    ThighCircum(String),
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct Model {
     metrics: Vec<Metric>,
@@ -50,6 +38,7 @@ impl PageModel<Vec<Metric>, Msg> for Model {
     fn data(&self) -> &Vec<Metric> {
         &self.metrics
     }
+
     fn error(&self) -> Option<&PageError> {
         self.err.as_ref()
     }

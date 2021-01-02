@@ -63,10 +63,10 @@ pub fn init() -> Model {
 
 impl FromInputData for NewBowel {
     fn from_input_data(inputs: Vec<InputData>) -> Result<Self, PageError> {
-        Ok(NewBowel { 
-            date: inputs[0].try_date()?, 
-            time: inputs[1].try_time_option()?, 
-            scale: inputs[2].try_byte()?, 
+        Ok(NewBowel {
+            date: inputs[0].try_date()?,
+            time: inputs[1].try_time_option()?,
+            scale: inputs[2].try_byte()?,
         })
     }
 }

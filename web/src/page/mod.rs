@@ -1,4 +1,3 @@
-use chrono::naive::{NaiveDate, NaiveTime};
 use diet_database::Tabular;
 use seed::{prelude::*, *};
 
@@ -66,14 +65,6 @@ pub fn get_event_value(ev: web_sys::Event) -> String {
         .value()
 }
 
-pub fn parse_date_input(s: &str) -> Result<NaiveDate, PageError> {
-    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|_| PageError::form("date"))
-}
-
-pub fn parse_time_input(s: &str) -> Result<NaiveTime, PageError> {
-    NaiveTime::parse_from_str(s, "%H:%M").map_err(|_| PageError::form("time"))
-}
-
 #[derive(Clone, Debug)]
 pub enum PageError {
     Submit,
@@ -99,7 +90,7 @@ impl Display for PageError {
             Delete => "Unable to delete item".to_string(),
             Load => "Cannot retrieve data".to_string(),
             Form(s) => format!("Field {} is invalid", s),
-            Developer => format!("The developer made a mistake!"),
+            Developer => "The developer made a mistake!".to_string(),
         };
         write!(f, "{}", s)
     }

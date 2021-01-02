@@ -79,25 +79,25 @@ impl InputType {
         use InputType::*;
         match self {
             Date => NaiveDate::parse_from_str(s, "%Y-%m-%d")
-                .map(|d| InputData::Date(d))
+                .map(InputData::Date)
                 .map_err(|_| PageError::form("date")),
             Time => NaiveTime::parse_from_str(s, "%H:%M")
-                .map(|d| InputData::Time(d))
+                .map(InputData::Time)
                 .map_err(|_| PageError::form("time")),
             TimeOption => Ok(InputData::TimeOption(
                 NaiveTime::parse_from_str(s, "%H:%M").ok(),
             )),
             Range(_, _) => s
                 .parse::<i8>()
-                .map(|d| InputData::Byte(d))
+                .map(InputData::Byte)
                 .map_err(|_| PageError::form("date")),
             Int => s
                 .parse::<i32>()
-                .map(|d| InputData::Int(d))
+                .map(InputData::Int)
                 .map_err(|_| PageError::form("integer")),
             Float => s
                 .parse::<f32>()
-                .map(|d| InputData::Float(d))
+                .map(InputData::Float)
                 .map_err(|_| PageError::form("float")),
             FloatOption => Ok(InputData::FloatOption(s.parse::<f32>().ok())),
             IntOption => Ok(InputData::IntOption(s.parse::<i32>().ok())),
@@ -105,7 +105,7 @@ impl InputType {
             DropDown(options) => {
                 if options.iter().any(|(i, _)| i.to_string() == s) {
                     s.parse::<i32>()
-                        .map(|d| InputData::Int(d))
+                        .map(InputData::Int)
                         .map_err(|_| PageError::form("foreign key"))
                 } else {
                     Err(PageError::form("foreign key"))
@@ -122,7 +122,7 @@ impl InputType {
             Range(min, max) => attrs!(At::Type => "range", At::Min => min, At::Max => max),
             Int | IntOption => attrs!(At::Type => "number"),
             Text | Float | FloatOption => attrs!(At::Type => "text"),
-            DropDown(options) => attrs!(),
+            DropDown(_) => attrs!(),
         };
         if let DropDown(options) = self {
             select![
