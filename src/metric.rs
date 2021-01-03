@@ -11,7 +11,6 @@ use crate::Tabular;
 pub struct NewMetric {
     pub date: NaiveDate,
     pub time: Option<NaiveTime>,
-    pub weight: Option<f32>,
     pub body_fat: Option<f32>,
     pub gut_circum: Option<f32>,
     pub waist_circum: Option<f32>,
@@ -25,7 +24,6 @@ pub struct Metric {
     pub id: i32,
     pub date: NaiveDate,
     pub time: Option<NaiveTime>,
-    pub weight: Option<f32>,
     pub body_fat: Option<f32>,
     pub gut_circum: Option<f32>,
     pub waist_circum: Option<f32>,
@@ -38,7 +36,6 @@ impl Tabular for Vec<Metric> {
         let v = vec![
             "Date",
             "Time",
-            "Weight",
             "Body Fat %",
             "Gut",
             "Waist",
@@ -58,7 +55,6 @@ impl Tabular for Vec<Metric> {
                 vec![
                     metric.date.format("%b %d %Y").to_string(),
                     time,
-                    metric.weight.map(|x| x.to_string()).unwrap_or_default(),
                     metric.body_fat.map(|x| x.to_string()).unwrap_or_default(),
                     metric.gut_circum.map(|x| x.to_string()).unwrap_or_default(),
                     metric

@@ -1,4 +1,4 @@
-use crate::page::{get_event_value, PageError};
+use crate::page::PageError;
 use seed::{prelude::*, *};
 
 mod input_data;
@@ -17,6 +17,10 @@ impl Form {
             FormMsg::UpdateValue(i, s) => {
                 self.inputs[i].set(s);
             }
+            FormMsg::Clear(i) => {
+                log!("clarning");
+                self.inputs[i].set(String::new());
+            }
         }
     }
 
@@ -26,6 +30,20 @@ impl Form {
             .enumerate()
             .map(|(i, input)| input.view(i))
             .collect()
+    }
+
+    pub fn set_all(&mut self, values: &Vec<String>) {
+        self.inputs.iter_mut().zip(values.iter()).for_each(|(input, new)| {
+            let new_value = match input.typ {
+                InputType::Date => {
+                    chrono::NaiveDate::parse_from_str(new, "%b %d %Y")
+                        .map(|x| x.format("%Y-%m-%d").to_string())
+                        .unwrap_or(String::new())
+                }
+                _ => new.to_owned()
+            };
+            input.set(new_value)
+        })
     }
 
     pub fn get_input_data(&self) -> Result<Vec<InputData>, PageError> {
@@ -42,9 +60,14 @@ pub struct Input {
 
 impl Input {
     pub fn new(name: &str, typ: InputType) -> Self {
+        let default = typ.default_value();
+        Self::with_initial(name, typ, &default)
+    }
+
+    pub fn with_initial(name: &str, typ: InputType, value: &str) -> Self {
         Self {
             name: name.to_string(),
-            value: String::new(),
+            value: value.to_string(),
             typ,
         }
     }
@@ -54,7 +77,11 @@ impl Input {
     }
 
     fn view(&self, i: usize) -> Node<FormMsg> {
-        div![label![format!("{}:", self.name)], self.typ.view(i),]
+        let label = match self.typ {
+            InputType::Range(_, _) => format!("{}: {}", self.name, self.value),
+            _ => format!("{}: ", self.name),
+        };
+        div![label![label], self.typ.view(i, &self.value),]
     }
 
     fn get_data(&self) -> Result<InputData, PageError> {

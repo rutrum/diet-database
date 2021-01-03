@@ -9,6 +9,7 @@ pub enum Msg {
     Fetch,
     Fetched(Result<Vec<Metric>, PageError>),
     FormUpdate(FormMsg),
+    Edit(usize),
     Delete(usize),
     Deleted(Result<(), PageError>),
     Submit,
@@ -18,6 +19,9 @@ pub enum Msg {
 impl PageMsg for Msg {
     fn delete(i: usize) -> Self {
         Msg::Delete(i)
+    }
+    fn edit(i: usize) -> Self {
+        Msg::Edit(i)
     }
     fn submit() -> Self {
         Msg::Submit
@@ -53,12 +57,11 @@ impl FromInputData for NewMetric {
         Ok(NewMetric {
             date: inputs[0].try_date()?,
             time: inputs[1].try_time_option()?,
-            weight: inputs[2].try_float_option()?,
-            body_fat: inputs[3].try_float_option()?,
+            body_fat: inputs[2].try_float_option()?,
             gut_circum: inputs[3].try_float_option()?,
-            waist_circum: inputs[3].try_float_option()?,
-            chest_circum: inputs[3].try_float_option()?,
-            thigh_circum: inputs[3].try_float_option()?,
+            waist_circum: inputs[4].try_float_option()?,
+            chest_circum: inputs[5].try_float_option()?,
+            thigh_circum: inputs[6].try_float_option()?,
         })
     }
 }
@@ -69,7 +72,6 @@ pub fn init() -> Model {
             inputs: vec![
                 Input::new("Date", InputType::Date),
                 Input::new("Time", InputType::TimeOption),
-                Input::new("Weight", InputType::FloatOption),
                 Input::new("Body Fat", InputType::FloatOption),
                 Input::new("Gut", InputType::FloatOption),
                 Input::new("Waist", InputType::FloatOption),
@@ -99,16 +101,22 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Err(err) => model.err = Some(err),
         },
         FormUpdate(update_msg) => model.form.update(update_msg),
+        Edit(idx) => {
+            let b = model.metrics[idx];
+            model.form.set_all(&vec![b].matrix()[0]);
+        }
         Delete(idx) => {
             let b = model.metrics[idx];
-            orders.perform_cmd({
-                async move {
-                    match ApiCall::Metric.delete(b).await {
-                        Ok(s) if s.status().is_ok() => Deleted(Ok(())),
-                        _ => Deleted(Err(PageError::Delete)),
+            if confirm(b) {
+                orders.perform_cmd({
+                    async move {
+                        match ApiCall::Metric.delete(b).await {
+                            Ok(s) if s.status().is_ok() => Deleted(Ok(())),
+                            _ => Deleted(Err(PageError::Delete)),
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         Deleted(result) => match result {
             Ok(()) => {

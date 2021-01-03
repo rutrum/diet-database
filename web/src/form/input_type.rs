@@ -1,11 +1,12 @@
-use chrono::naive::{NaiveDate, NaiveTime};
 use crate::page::{get_event_value, PageError};
+use chrono::naive::{NaiveDate, NaiveTime};
 use seed::{prelude::*, *};
 
 use super::*;
 
 pub enum FormMsg {
     UpdateValue(usize, String),
+    Clear(usize),
 }
 
 #[derive(Clone, Debug)]
@@ -62,7 +63,20 @@ impl InputType {
         }
     }
 
-    pub fn view(&self, i: usize) -> Node<FormMsg> {
+    pub fn default_value(&self) -> String {
+        match self {
+            InputType::Date => {
+                let js_date = js_sys::Date::new_0();
+                let date = js_date.get_date();
+                let year = js_date.get_full_year();
+                let month = js_date.get_month() + 1;
+                format!("{}-{:0>2}-{:0>2}", year, month, date).to_string()
+            }
+            _ => String::new(),
+        }
+    }
+
+    pub fn view(&self, i: usize, value: &String) -> Node<FormMsg> {
         use InputType::*;
         let attrs = match self {
             Date => attrs!(At::Type => "date"),
@@ -72,8 +86,8 @@ impl InputType {
             Text | Float | FloatOption => attrs!(At::Type => "text"),
             DropDown(_) => attrs!(),
         };
-        if let DropDown(options) = self {
-            select![
+        match self {
+            DropDown(options) => select![
                 option![],
                 options
                     .iter()
@@ -82,15 +96,26 @@ impl InputType {
                     i,
                     get_event_value(ev)
                 )),
-            ]
-        } else {
-            input![
+            ],
+            TimeOption => div![
+                button!["Clear", ev(Ev::Click, move |_| FormMsg::Clear(i))],
+                input![
+                    attrs,
+                    attrs!(At::Value => value),
+                    ev(Ev::Input, move |ev| FormMsg::UpdateValue(
+                        i,
+                        get_event_value(ev)
+                    )),
+                ]
+            ],
+            _ => input![
                 attrs,
-                ev(Ev::Change, move |ev| FormMsg::UpdateValue(
+                attrs!(At::Value => value),
+                ev(Ev::Input, move |ev| FormMsg::UpdateValue(
                     i,
                     get_event_value(ev)
                 )),
-            ]
+            ],
         }
     }
 }

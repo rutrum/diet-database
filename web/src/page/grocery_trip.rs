@@ -11,6 +11,7 @@ pub enum Msg {
     Fetched(Result<Vec<GroceryTrip>, PageError>),
     FetchedStores(Result<Vec<Store>, PageError>),
     FormUpdate(FormMsg),
+    Edit(usize),
     Delete(usize),
     Deleted(Result<(), PageError>),
     Submit,
@@ -26,6 +27,9 @@ impl PageMsg for Msg {
     }
     fn load() -> Self {
         Msg::Fetch
+    }
+    fn edit(i: usize) -> Self {
+        Msg::Edit(i)
     }
 }
 
@@ -110,16 +114,22 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         FetchedStores(Err(err)) => model.err = Some(err),
         FormUpdate(update_msg) => model.form.update(update_msg),
+        Edit(idx) => {
+            let b = model.trips[idx].clone();
+            model.form.set_all(&vec![b].matrix()[0]);
+        }
         Delete(idx) => {
             let b = model.trips[idx].clone();
-            orders.perform_cmd({
-                async move {
-                    match ApiCall::GroceryTrip.delete(b).await {
-                        Ok(s) if s.status().is_ok() => Deleted(Ok(())),
-                        _ => Deleted(Err(PageError::Delete)),
+            if confirm(b.clone()) {
+                orders.perform_cmd({
+                    async move {
+                        match ApiCall::GroceryTrip.delete(b).await {
+                            Ok(s) if s.status().is_ok() => Deleted(Ok(())),
+                            _ => Deleted(Err(PageError::Delete)),
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         Deleted(Ok(_)) => {
             orders.send_msg(Fetch);

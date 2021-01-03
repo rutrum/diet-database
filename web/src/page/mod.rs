@@ -10,6 +10,7 @@ pub mod store;
 pub trait PageMsg {
     /// Returns the msg cooresponding to deleting the ith item
     fn delete(_: usize) -> Self;
+    fn edit(_: usize) -> Self;
     fn submit() -> Self;
     fn load() -> Self;
 }
@@ -31,7 +32,7 @@ pub trait PageModel<T: Tabular, M: 'static + PageMsg> {
             matrix
                 .iter()
                 .enumerate()
-                .map(|(i, row)| { tr![row.iter().map(|cell| { td![cell] }), delete_button(i)] }),
+                .map(|(i, row)| { tr![row.iter().map(|cell| { td![cell] }), edit_button(i), delete_button(i)] }),
         ]
     }
 
@@ -45,8 +46,36 @@ pub trait PageModel<T: Tabular, M: 'static + PageMsg> {
     }
 }
 
+fn confirm<T>(item: T) -> bool
+where
+    Vec<T>: Tabular,
+{
+    let items = vec![item];
+    let info = items
+        .headers()
+        .iter()
+        .zip(items.matrix()[0].iter())
+        .map(|(head, val)| format!("{}: {}", head, val))
+        .collect::<Vec<String>>()
+        .join("\n");
+    web_sys::window()
+        .map(|x| {
+            x.confirm_with_message(&format!(
+                "Are you sure you want to delete this item?\n{}",
+                info
+            ))
+            .ok()
+        })
+        .flatten()
+        .unwrap()
+}
+
 fn delete_button<T: 'static + PageMsg>(i: usize) -> Node<T> {
     button!["delete", ev(Ev::Click, move |_| T::delete(i)),]
+}
+
+fn edit_button<T: 'static + PageMsg>(i: usize) -> Node<T> {
+    button!["edit", ev(Ev::Click, move |_| T::edit(i)),]
 }
 
 fn submit_button<T: 'static + PageMsg>() -> Node<T> {

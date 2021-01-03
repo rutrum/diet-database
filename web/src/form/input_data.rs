@@ -1,5 +1,5 @@
-use chrono::naive::{NaiveDate, NaiveTime};
 use crate::page::PageError;
+use chrono::naive::{NaiveDate, NaiveTime};
 
 pub enum InputData {
     Date(NaiveDate),

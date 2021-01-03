@@ -21,7 +21,6 @@ table! {
         id -> Integer,
         date -> Date,
         time -> Nullable<Time>,
-        weight -> Nullable<Float>,
         body_fat -> Nullable<Float>,
         gut_circum -> Nullable<Float>,
         waist_circum -> Nullable<Float>,
@@ -37,6 +36,15 @@ table! {
     }
 }
 
+table! {
+    weight (id) {
+        id -> Integer,
+        date -> Date,
+        time -> Nullable<Time>,
+        value -> Float,
+    }
+}
+
 joinable!(grocery_trip -> store (store_id));
 
-allow_tables_to_appear_in_same_query!(bowel, grocery_trip, metric, store,);
+allow_tables_to_appear_in_same_query!(bowel, grocery_trip, metric, store, weight,);

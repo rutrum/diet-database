@@ -9,6 +9,7 @@ pub enum Msg {
     Fetch,
     Fetched(Result<Vec<Store>, PageError>),
     FormUpdate(FormMsg),
+    Edit(usize),
     Delete(usize),
     Deleted(Result<(), PageError>),
     Submit,
@@ -18,6 +19,9 @@ pub enum Msg {
 impl PageMsg for Msg {
     fn delete(i: usize) -> Self {
         Msg::Delete(i)
+    }
+    fn edit(i: usize) -> Self {
+        Msg::Edit(i)
     }
     fn submit() -> Self {
         Msg::Submit
@@ -81,17 +85,23 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             Err(err) => model.err = Some(err),
         },
         FormUpdate(update_msg) => model.form.update(update_msg),
+        Edit(idx) => {
+            let b = model.stores[idx].clone();
+            model.form.set_all(&vec![b].matrix()[0]);
+        }
         Delete(idx) => {
             log!("deleting store");
             let s = model.stores[idx].clone();
-            orders.perform_cmd({
-                async move {
-                    match ApiCall::Store.delete(s).await {
-                        Ok(s) if s.status().is_ok() => Deleted(Ok(())),
-                        _ => Deleted(Err(PageError::Delete)),
+            if confirm(s.clone()) {
+                orders.perform_cmd({
+                    async move {
+                        match ApiCall::Store.delete(s).await {
+                            Ok(s) if s.status().is_ok() => Deleted(Ok(())),
+                            _ => Deleted(Err(PageError::Delete)),
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         Deleted(result) => match result {
             Ok(()) => {
