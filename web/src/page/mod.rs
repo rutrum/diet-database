@@ -5,6 +5,7 @@ pub mod bowel;
 pub mod grocery_trip;
 pub mod metric;
 pub mod store;
+pub mod weight;
 //pub mod generic;
 
 pub trait PageMsg {

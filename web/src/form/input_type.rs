@@ -65,13 +65,7 @@ impl InputType {
 
     pub fn default_value(&self) -> String {
         match self {
-            InputType::Date => {
-                let js_date = js_sys::Date::new_0();
-                let date = js_date.get_date();
-                let year = js_date.get_full_year();
-                let month = js_date.get_month() + 1;
-                format!("{}-{:0>2}-{:0>2}", year, month, date).to_string()
-            }
+            InputType::Date => chrono::Local::now().format("%Y-%m-%d").to_string(),
             _ => String::new(),
         }
     }

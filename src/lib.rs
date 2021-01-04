@@ -11,6 +11,7 @@ pub use db::schema;
 pub mod bowel;
 pub mod grocery_trip;
 pub mod metric;
+pub mod weight;
 pub mod store;
 
 mod table;

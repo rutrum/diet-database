@@ -22,6 +22,7 @@ pub enum PageName {
     Store,
     GroceryTrip,
     Metric,
+    Weight,
 }
 
 impl PageName {
@@ -32,6 +33,7 @@ impl PageName {
             Store => Page::Store(page::store::init()),
             GroceryTrip => Page::GroceryTrip(page::grocery_trip::init()),
             Metric => Page::Metric(page::metric::init()),
+            Weight => Page::Weight(page::weight::init()),
         }
     }
 
@@ -42,6 +44,7 @@ impl PageName {
             Store => "Grocery Stores",
             GroceryTrip => "Grocery Trips",
             Metric => "Body Metrics",
+            Weight => "Weight",
         }
         .to_string()
     }
@@ -52,6 +55,7 @@ pub enum Page {
     Store(page::store::Model),
     GroceryTrip(page::grocery_trip::Model),
     Metric(page::metric::Model),
+    Weight(page::weight::Model),
 }
 
 pub enum Msg {
@@ -60,6 +64,7 @@ pub enum Msg {
     StorePageUpdate(page::store::Msg),
     GroceryTripPageUpdate(page::grocery_trip::Msg),
     MetricPageUpdate(page::metric::Msg),
+    WeightPageUpdate(page::weight::Msg),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -73,6 +78,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
                 Page::Metric(_) => {
                     orders.send_msg(Msg::MetricPageUpdate(page::metric::Msg::load()))
+                }
+                Page::Weight(_) => {
+                    orders.send_msg(Msg::WeightPageUpdate(page::weight::Msg::load()))
                 }
             };
             model.page = page;
@@ -101,6 +109,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 page::metric::update(msg, model, &mut orders.proxy(Msg::MetricPageUpdate));
             }
         }
+        Msg::WeightPageUpdate(msg) => {
+            if let Page::Weight(model) = &mut model.page {
+                page::weight::update(msg, model, &mut orders.proxy(Msg::WeightPageUpdate));
+            }
+        }
     }
 }
 
@@ -114,6 +127,7 @@ fn view_page(model: &Model) -> Node<Msg> {
         Page::Store(model) => model.view().map_msg(Msg::StorePageUpdate),
         Page::GroceryTrip(model) => model.view().map_msg(Msg::GroceryTripPageUpdate),
         Page::Metric(model) => model.view().map_msg(Msg::MetricPageUpdate),
+        Page::Weight(model) => model.view().map_msg(Msg::WeightPageUpdate),
     }
 }
 
@@ -123,6 +137,7 @@ fn view_page_selector(_model: &Model) -> Node<Msg> {
         PageName::Store,
         PageName::GroceryTrip,
         PageName::Metric,
+        PageName::Weight,
     ];
     nav![
         C!["page-selector"],

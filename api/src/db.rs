@@ -11,6 +11,26 @@ pub fn create_connection() -> MysqlConnection {
         .unwrap_or_else(|_| panic!("Cannot connect to database at {}", database_url))
 }
 
+pub mod weight {
+    use super::*;
+    use diet_database::weight::*;
+
+    pub fn insert(conn: &MysqlConnection, item: NewWeight) -> Result<usize> {
+        diesel::insert_into(schema::weight::table)
+            .values(&item)
+            .execute(conn)
+    }
+
+    pub fn select_all(conn: &MysqlConnection) -> Result<Vec<Weight>> {
+        schema::weight::table.load::<Weight>(conn)
+    }
+
+    pub fn delete(conn: &MysqlConnection, item: Weight) -> Result<usize> {
+        use schema::weight::dsl::*;
+        diesel::delete(weight.filter(id.eq(item.id))).execute(conn)
+    }
+}
+
 pub mod metric {
     use super::*;
     use diet_database::metric::*;

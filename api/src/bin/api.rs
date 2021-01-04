@@ -12,6 +12,38 @@ use rocket_cors::{AllowedOrigins, Error};
 
 use api::db;
 
+mod weight {
+    use super::*;
+    use diet_database::weight::*;
+
+    #[get("/weight")]
+    pub fn get_all() -> Json<Vec<Weight>> {
+        let conn = db::create_connection();
+        let items = db::weight::select_all(&conn).unwrap_or_default();
+        Json(items)
+    }
+
+    #[post("/weight", data = "<item>")]
+    pub fn add(item: Json<NewWeight>) -> Status {
+        let item = item.into_inner();
+        let conn = db::create_connection();
+        match db::weight::insert(&conn, item) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+
+    #[delete("/weight", data = "<item>")]
+    pub fn delete(item: Json<Weight>) -> Status {
+        let item = item.into_inner();
+        let conn = db::create_connection();
+        match db::weight::delete(&conn, item) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+}
+
 mod metric {
     use super::*;
     use diet_database::metric::*;
@@ -163,6 +195,9 @@ fn main() -> Result<(), Error> {
                 metric::get_all,
                 metric::add,
                 metric::delete,
+                weight::get_all,
+                weight::add,
+                weight::delete,
             ],
         )
         .attach(cors)

@@ -10,6 +10,7 @@ pub enum ApiCall {
     Store,
     GroceryTrip,
     Metric,
+    Weight,
 }
 
 impl ApiCall {

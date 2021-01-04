@@ -34,15 +34,7 @@ impl Form {
 
     pub fn set_all(&mut self, values: &Vec<String>) {
         self.inputs.iter_mut().zip(values.iter()).for_each(|(input, new)| {
-            let new_value = match input.typ {
-                InputType::Date => {
-                    chrono::NaiveDate::parse_from_str(new, "%b %d %Y")
-                        .map(|x| x.format("%Y-%m-%d").to_string())
-                        .unwrap_or(String::new())
-                }
-                _ => new.to_owned()
-            };
-            input.set(new_value)
+            input.set(new.to_owned())
         })
     }
 
