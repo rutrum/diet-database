@@ -11,6 +11,33 @@ pub fn create_connection() -> MysqlConnection {
         .unwrap_or_else(|_| panic!("Cannot connect to database at {}", database_url))
 }
 
+pub mod grocery_item {
+    use super::*;
+    use diet_database::grocery_item::*;
+
+    pub fn insert(conn: &MysqlConnection, item: NewGroceryItem) -> Result<usize> {
+        diesel::insert_into(schema::grocery_item::table)
+            .values(&item)
+            .execute(conn)
+    }
+
+    pub fn select_all(conn: &MysqlConnection) -> Result<Vec<GroceryItem>> {
+        use diesel::dsl::sql;
+        use schema::grocery_item::dsl::*;
+        use schema::grocery_trip::{self, date};
+        use schema::store;
+        grocery_item
+            .inner_join(grocery_trip::table.inner_join(store::table))
+            .select((id, sql("CONCAT(store.name, ' on ', grocery_trip.date)"), name, amount, measure))
+            .load(conn)
+    }
+
+    pub fn delete(conn: &MysqlConnection, item: GroceryItem) -> Result<usize> {
+        use schema::grocery_item::dsl::*;
+        diesel::delete(grocery_item.filter(id.eq(item.id))).execute(conn)
+    }
+}
+
 pub mod weight {
     use super::*;
     use diet_database::weight::*;

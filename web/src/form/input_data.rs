@@ -9,6 +9,7 @@ pub enum InputData {
     Int(i32),
     IntOption(Option<i32>),
     Text(String),
+    TextOption(Option<String>),
     Float(f32),
     FloatOption(Option<f32>),
 }
@@ -53,6 +54,12 @@ impl InputData {
     pub fn try_text(&self) -> Result<String, PageError> {
         match self {
             InputData::Text(d) => Ok(d.clone()),
+            _ => Err(PageError::Developer),
+        }
+    }
+    pub fn try_text_option(&self) -> Result<Option<String>, PageError> {
+        match self {
+            InputData::TextOption(d) => Ok(d.clone()),
             _ => Err(PageError::Developer),
         }
     }

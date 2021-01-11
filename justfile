@@ -17,7 +17,7 @@ serve:
     (cd web; microserver)
 
 tree:
-    tree -I "pkg|target" --dirsfirst
+    tree -I "pkg|target|migrations" --dirsfirst
 
 api:
     cargo run -p api --bin api
@@ -53,3 +53,6 @@ dev:
 
 schema:
     diesel print-schema
+
+justfile:
+    nvim justfile

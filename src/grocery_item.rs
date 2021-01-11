@@ -15,11 +15,14 @@ pub struct NewGroceryItem {
     pub measure: Option<String>,
 }
 
+#[cfg(feature = "database")]
+use diesel::types::*;
+
 #[cfg_attr(feature = "database", derive(Queryable))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GroceryItem {
     pub id: i32,
-    pub trip_desc: i32,
+    pub trip_desc: String,
     pub name: String,
     pub amount: Option<f32>,
     pub measure: Option<String>,
@@ -27,17 +30,24 @@ pub struct GroceryItem {
 
 impl Tabular for Vec<GroceryItem> {
     fn headers(&self) -> Vec<String> {
-        let v = vec!["Name", "", "Scale"];
+        let v = vec!["Trip", "Name", "Amount"];
         v.iter().map(|x| x.to_string()).collect()
     }
 
     fn matrix(&self) -> Vec<Vec<String>> {
         self.iter()
-            .map(|trip| {
+            .map(|item| {
+                let amount = match &item.amount {
+                    None => String::new(),
+                    Some(val) => match &item.measure {
+                        None => format!("{}", val),
+                        Some(msr) => format!("{} {}", val, msr),
+                    }
+                };
                 vec![
-                    trip.date.format("%b %d %Y").to_string(),
-                    time,
-                    trip.store_name.to_string(),
+                    item.trip_desc.clone(),
+                    item.name.clone(),
+                    amount,
                 ]
             })
             .collect::<Vec<Vec<String>>>()

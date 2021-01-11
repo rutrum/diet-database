@@ -17,6 +17,7 @@ pub enum InputType {
     Range(usize, usize),
     Int,
     Text,
+    TextOption,
     IntOption,
     DropDown(Vec<(i32, String)>),
     Float,
@@ -51,6 +52,11 @@ impl InputType {
             FloatOption => Ok(InputData::FloatOption(s.parse::<f32>().ok())),
             IntOption => Ok(InputData::IntOption(s.parse::<i32>().ok())),
             Text => Ok(InputData::Text(s.to_string())),
+            TextOption => Ok(if s.is_empty() {
+                InputData::TextOption(None)
+            } else {
+                InputData::TextOption(Some(s.to_string()))
+            }),
             DropDown(options) => {
                 if options.iter().any(|(i, _)| i.to_string() == s) {
                     s.parse::<i32>()
@@ -77,7 +83,7 @@ impl InputType {
             Time | TimeOption => attrs!(At::Type => "time"),
             Range(min, max) => attrs!(At::Type => "range", At::Min => min, At::Max => max),
             Int | IntOption => attrs!(At::Type => "number"),
-            Text | Float | FloatOption => attrs!(At::Type => "text"),
+            Text | TextOption | Float | FloatOption => attrs!(At::Type => "text"),
             DropDown(_) => attrs!(),
         };
         match self {

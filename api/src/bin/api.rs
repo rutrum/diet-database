@@ -12,6 +12,38 @@ use rocket_cors::{AllowedOrigins, Error};
 
 use api::db;
 
+mod grocery_item {
+    use super::*;
+    use diet_database::grocery_item::*;
+
+    #[get("/grocery_item")]
+    pub fn get_all() -> Json<Vec<GroceryItem>> {
+        let conn = db::create_connection();
+        let items = db::grocery_item::select_all(&conn).unwrap_or_default();
+        Json(items)
+    }
+
+    #[post("/grocery_item", data = "<item>")]
+    pub fn add(item: Json<NewGroceryItem>) -> Status {
+        let item = item.into_inner();
+        let conn = db::create_connection();
+        match db::grocery_item::insert(&conn, item) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+
+    #[delete("/grocery_item", data = "<item>")]
+    pub fn delete(item: Json<GroceryItem>) -> Status {
+        let item = item.into_inner();
+        let conn = db::create_connection();
+        match db::grocery_item::delete(&conn, item) {
+            Ok(_) => Status::Ok,
+            Err(_) => Status::InternalServerError,
+        }
+    }
+}
+
 mod weight {
     use super::*;
     use diet_database::weight::*;
@@ -198,6 +230,9 @@ fn main() -> Result<(), Error> {
                 weight::get_all,
                 weight::add,
                 weight::delete,
+                grocery_item::get_all,
+                grocery_item::add,
+                grocery_item::delete,
             ],
         )
         .attach(cors)

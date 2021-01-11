@@ -3,6 +3,7 @@ use seed::{prelude::*, *};
 
 pub mod bowel;
 pub mod grocery_trip;
+pub mod grocery_item;
 pub mod metric;
 pub mod store;
 pub mod weight;

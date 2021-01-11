@@ -23,6 +23,7 @@ pub enum PageName {
     GroceryTrip,
     Metric,
     Weight,
+    GroceryItem,
 }
 
 impl PageName {
@@ -32,6 +33,7 @@ impl PageName {
             Bowel => Page::Bowel(page::bowel::init()),
             Store => Page::Store(page::store::init()),
             GroceryTrip => Page::GroceryTrip(page::grocery_trip::init()),
+            GroceryItem => Page::GroceryItem(page::grocery_item::init()),
             Metric => Page::Metric(page::metric::init()),
             Weight => Page::Weight(page::weight::init()),
         }
@@ -43,6 +45,7 @@ impl PageName {
             Bowel => "Bowel Movements",
             Store => "Grocery Stores",
             GroceryTrip => "Grocery Trips",
+            GroceryItem => "Grocery Items",
             Metric => "Body Metrics",
             Weight => "Weight",
         }
@@ -54,6 +57,7 @@ pub enum Page {
     Bowel(page::bowel::Model),
     Store(page::store::Model),
     GroceryTrip(page::grocery_trip::Model),
+    GroceryItem(page::grocery_item::Model),
     Metric(page::metric::Model),
     Weight(page::weight::Model),
 }
@@ -63,6 +67,7 @@ pub enum Msg {
     BowelPageUpdate(page::bowel::Msg),
     StorePageUpdate(page::store::Msg),
     GroceryTripPageUpdate(page::grocery_trip::Msg),
+    GroceryItemPageUpdate(page::grocery_item::Msg),
     MetricPageUpdate(page::metric::Msg),
     WeightPageUpdate(page::weight::Msg),
 }
@@ -75,6 +80,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Page::Store(_) => orders.send_msg(Msg::StorePageUpdate(page::store::Msg::load())),
                 Page::GroceryTrip(_) => {
                     orders.send_msg(Msg::GroceryTripPageUpdate(page::grocery_trip::Msg::load()))
+                }
+                Page::GroceryItem(_) => {
+                    orders.send_msg(Msg::GroceryItemPageUpdate(page::grocery_item::Msg::load()))
                 }
                 Page::Metric(_) => {
                     orders.send_msg(Msg::MetricPageUpdate(page::metric::Msg::load()))
@@ -93,6 +101,15 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::StorePageUpdate(msg) => {
             if let Page::Store(model) = &mut model.page {
                 page::store::update(msg, model, &mut orders.proxy(Msg::StorePageUpdate));
+            }
+        }
+        Msg::GroceryItemPageUpdate(msg) => {
+            if let Page::GroceryItem(model) = &mut model.page {
+                page::grocery_item::update(
+                    msg,
+                    model,
+                    &mut orders.proxy(Msg::GroceryItemPageUpdate),
+                );
             }
         }
         Msg::GroceryTripPageUpdate(msg) => {
@@ -126,6 +143,7 @@ fn view_page(model: &Model) -> Node<Msg> {
         Page::Bowel(model) => model.view().map_msg(Msg::BowelPageUpdate),
         Page::Store(model) => model.view().map_msg(Msg::StorePageUpdate),
         Page::GroceryTrip(model) => model.view().map_msg(Msg::GroceryTripPageUpdate),
+        Page::GroceryItem(model) => model.view().map_msg(Msg::GroceryItemPageUpdate),
         Page::Metric(model) => model.view().map_msg(Msg::MetricPageUpdate),
         Page::Weight(model) => model.view().map_msg(Msg::WeightPageUpdate),
     }
@@ -136,6 +154,7 @@ fn view_page_selector(_model: &Model) -> Node<Msg> {
         PageName::Bowel,
         PageName::Store,
         PageName::GroceryTrip,
+        PageName::GroceryItem,
         PageName::Metric,
         PageName::Weight,
     ];
