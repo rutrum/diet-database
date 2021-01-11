@@ -62,7 +62,8 @@ pub mod bowel {
     }
 
     pub fn select_all(conn: &MysqlConnection) -> Result<Vec<Bowel>> {
-        schema::bowel::table.load::<Bowel>(conn)
+        use schema::bowel::dsl::*;
+        bowel.order(date.desc()).load(conn)
     }
 
     pub fn delete(conn: &MysqlConnection, del_bowel: Bowel) -> Result<usize> {

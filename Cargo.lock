@@ -342,6 +342,7 @@ name = "diet_database"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "convert_case",
  "diesel",
  "serde",
 ]

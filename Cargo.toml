@@ -16,3 +16,4 @@ database = ["diesel"]
 serde = { version = "1.0.117", features = ["derive"] }
 diesel = { version = "1.4.5", features = ["mysql", "numeric", "chrono"], optional = true }
 chrono = { version = "0.4", features = ["serde"] } 
+convert_case = "0.4.0"

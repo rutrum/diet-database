@@ -13,7 +13,7 @@ web:
 watch-web:
     watchexec -w web/src -- just web
 
-serve: web
+serve:
     (cd web; microserver)
 
 tree:
@@ -36,3 +36,20 @@ css:
 
 watch-css:
     watchexec -w web/scss -- just css
+
+dev:
+    tmux kill-session -t diet || true
+    tmux new-session -d
+    tmux rename 'diet'
+    tmux renamew 'css-serve'
+    tmux send 'just watch-css' ENTER
+    tmux new-window -n 'serve'
+    tmux send 'just serve' ENTER
+    tmux new-window -n 'api'
+    tmux send 'just watch-api' ENTER
+    tmux new-window -n 'web'
+    tmux send 'just watch-web' ENTER
+    tmux attach -t diet
+
+schema:
+    diesel print-schema
